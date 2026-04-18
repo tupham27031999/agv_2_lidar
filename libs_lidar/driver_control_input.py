@@ -31,6 +31,9 @@ class detect_data_sent_driver:
         self.toa_do_cu_1 = []
         self.toa_do_cu_2 = []
         self.toa_do_diem_dich = [] # dùng để tạo self.point_old, kiểm tra vị trí điểm 1 so với point_old
+        self.toa_do_diem_kiem_soat = []
+        self.toa_do_diem_cong_1 = []
+        self.toa_do_diem_cong_2 = []
         self.toa_do_diem_huong = []
         self.done_tin_hieu_tam_thoi = 0
         self.robot_direction = []
@@ -90,7 +93,7 @@ class detect_data_sent_driver:
 
 
         self.test_tranh_nhau = 1
-        self.debug_stop = 1
+        self.debug_stop = 0
         self.loi_paths_web = 0
         self.time_vung_loai_bo = time.time()
 
@@ -103,11 +106,12 @@ class detect_data_sent_driver:
             AGVConfig.vung_loai_bo_x1y1x2y2 = []
             AGVConfig.vung_loai_bo_x1y1x2y2_pixel = []
         else:
-            if time.time() -  self.time_vung_loai_bo > 5:
-                AGVConfig.tam_thoi_reset_vung_loai_bo = True
+            # if time.time() -  self.time_vung_loai_bo > 5:
+            #     AGVConfig.tam_thoi_reset_vung_loai_bo = True
             if len(AGVConfig.vung_loai_bo_x1y1x2y2) == 0 and len(AGVConfig.vung_loai_bo_x1y1x2y2_pixel) == 0:
                 # Load lại từ file đang chọn trong cấu hình
                 AGVConfig.load_loai_bo(AGVConfig.loai_bo_coc_xe.get("ten_vung_loai_bo"))
+            
         # nâng hạ khi mở phần mềm
         da_nang_xong = ket_noi_esp_loa.da_nang_xong
         da_ha_xong = ket_noi_esp_loa.da_ha_xong
@@ -141,6 +145,7 @@ class detect_data_sent_driver:
         # print(f"AGVConfig.dieu_khien_agv = {AGVConfig.dieu_khien_agv}")
         # print(AGVConfig.dieu_khien_agv["dieu_khien_thu_cong"] == False)
         # print(f"toa_do_hien_tai", AGVConfig.toa_do_agv_mm) # toa_do_hien_tai [np.float64(-16068.8015275983), np.float64(-3829.197552147558)]
+
         if AGVConfig.dieu_khien_agv["dieu_khien_thu_cong"] == False:
             # load các giá trị tọa độ góc của agv, check an toàn
             self.load_data_process()
@@ -163,6 +168,9 @@ class detect_data_sent_driver:
                         "toa_do_diem_dau": self.toa_do_diem_dau,
                         "toa_do_diem_dich": self.toa_do_diem_dich,
                         "toa_do_diem_huong": self.toa_do_diem_huong,
+                        "toa_do_diem_cong_1": self.toa_do_diem_cong_1,
+                        "toa_do_diem_cong_2": self.toa_do_diem_cong_2,
+                        "toa_do_diem_kiem_soat": self.toa_do_diem_kiem_soat,
                         "angle": self.angle,
                         "distance": self.distance,
                         "check_angle_distance": self.check_angle_distance,
@@ -287,6 +295,7 @@ class detect_data_sent_driver:
             if da_ha_xong == 1:
                 trang_thai_hien_tai = "ha"
             graph = tim_duong_di.tao_graph()
+            print("lllll", len(tin_hieu["paths"]), tin_hieu["paths"])
             if len(tin_hieu["paths"]) == 0:
                 start_node = self.vi_tri_nhan_tin_hieu_nhan
                 goal_node = self.dich_den_tin_hieu_nhan
@@ -303,7 +312,7 @@ class detect_data_sent_driver:
 
                 print("graph = ", graph)
                 print("p_actual = ", p_actual) #p_actual =  ['X1', 'W1', 'G3', 'P19']
-                AGVConfig.danh_sach_duong_di = self.convert_danh_sach_duong_di(p_actual)
+                AGVConfig.danh_sach_duong_di = p_actual
                 AGVConfig.tin_hieu_nhan[name_agv]["danh_sach_duong_di"] = p_actual
 
 
@@ -313,7 +322,8 @@ class detect_data_sent_driver:
                 # chỉ vào khi self.list_data là None, tức là chưa có dữ liệu đường đi nào được tạo ra trước đó, thì mới lấy đường đi từ webserver để tối ưu hóa lại
                 p_actual = tin_hieu["paths"]
                 self.duong_di_ly_tuong, c_ideal = tim_duong_di.toi_uu_hoa_duong_di(p_actual, 5)
-                AGVConfig.danh_sach_duong_di = self.convert_danh_sach_duong_di(p_actual)
+                print("++++++++++++++++", p_actual, self.duong_di_ly_tuong)
+                AGVConfig.danh_sach_duong_di = p_actual
                 AGVConfig.tin_hieu_nhan[name_agv]["danh_sach_duong_di"] = p_actual
 
 
@@ -502,10 +512,10 @@ class detect_data_sent_driver:
             # điều kiện khi kích thước paths != 0: điểm đầu của paths trùng với điểm đích hiện tại và đã đến đích
             cap_nhat_duong_moi_do_paths = 0
             if len(AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["paths"]) != 0 and self.list_data is not None:
-                ten_data = "data" + str(self.stt_list_data)
-                ten_diem_dich = self.list_data[ten_data][0][1]
-                if ten_diem_dich == AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["paths"][-1]:
-                    cap_nhat_duong_moi_do_paths = 1 # có paths nên cập nhật đường đi
+                # ten_data = "data" + str(self.stt_list_data)
+                # ten_diem_dich = self.list_data[ten_data][0][1]
+                # if ten_diem_dich == AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["paths"][-1]:
+                cap_nhat_duong_moi_do_paths = 1 # có paths nên cập nhật đường đi
 
             # không có đích đến sẽ stop và cập nhật lại đích đến
             if self.dich_den_tin_hieu_nhan  == "":
@@ -514,37 +524,40 @@ class detect_data_sent_driver:
                     print("---- stop do chưa có tín hiệu điểm đích nào được nhận từ webserver ----")
 
             # reset toàn bộ biến
+            # print("cap_nhat_duong_moi_do_paths", cap_nhat_duong_moi_do_paths)
             if ((AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"] != self.dich_den_tin_hieu_nhan or 
-                            AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["trang_thai_gui_agv"] != self.trang_thai_tin_hieu_nhan) or cap_nhat_duong_moi_do_paths == 1) and \
+                            AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["trang_thai_gui_agv"] != self.trang_thai_tin_hieu_nhan) or 
+                            cap_nhat_duong_moi_do_paths == 1) and \
                             self.dich_den_tin_hieu_nhan != "" and trang_thai_check != "xoay_agv_vuong_goc" and trang_thai_check != "xoay_agv_song_song":
-                print("AGVConfig.tin_hieu_nhan[AGVConfig.name_agv", AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"], 
-                                                                    self.vi_tri_nhan_tin_hieu_nhan, self.dich_den_tin_hieu_nhan, 
-                                                                    AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["vi_tri_hien_tai"], 
-                                                                    self.hoan_thanh_den_vi_tri_dich )
-                self.den_diem_gan_nhat = True
+                # print("AGVConfig.tin_hieu_nhan[AGVConfig.name_agv", AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"], 
+                #                                                     self.vi_tri_nhan_tin_hieu_nhan, self.dich_den_tin_hieu_nhan, 
+                #                                                     AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["vi_tri_hien_tai"], 
+                #                                                     self.hoan_thanh_den_vi_tri_dich )
+                # self.den_diem_gan_nhat = True
                 if (self.convert_data_run_agv["run_diem_2"] == "OK" 
                                                 and self.convert_data_run_agv["run_huong"] == "OK" 
-                                                and self.convert_data_run_agv["run_huong_2"] == "OK") and AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"] != self.vi_tri_nhan_tin_hieu_nhan:
-                    self.den_diem_gan_nhat = False
-                    self.list_data = None
-                    self.data_thong_tin_nang_ha = None
-                    self.vi_tri_nhan_tin_hieu_nhan = ""
-                    self.dich_den_tin_hieu_nhan = ""
-                    self.stt_list_data = 1
+                                                and self.convert_data_run_agv["run_huong_2"] == "OK"):
+                    # self.den_diem_gan_nhat = False
+                    if AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"] != self.vi_tri_nhan_tin_hieu_nhan:
+                        self.list_data = None
+                        self.data_thong_tin_nang_ha = None
+                        self.vi_tri_nhan_tin_hieu_nhan = ""
+                        self.dich_den_tin_hieu_nhan = ""
+                        self.stt_list_data = 1
 
-                    self.thong_tin_nang_ha = self.thong_tin_nang_ha_0.copy()
-                    self.convert_data_run_agv = self.convert_data_run_agv0.copy()
-                    self.ten_diem_bat_dau = ""
-                    
-                    self.distance_old = 1000
-                    self.xoay_goc = 1
-                    self.so_lan_check_vi_tri_xe = 0
-                    self.xac_dinh_vi_tri_xe = 0
-                    AGVConfig_2.toa_do_tam_xe_mm = None
-                    AGVConfig_2.goc_hcn = None
-                    AGVConfig_2.diem_gan_nhat = None
-                    AGVConfig_2.xac_dinh_vi_tri_xe = 0
-                    self.hoan_thanh_den_vi_tri_dich = False
+                        self.thong_tin_nang_ha = self.thong_tin_nang_ha_0.copy()
+                        self.convert_data_run_agv = self.convert_data_run_agv0.copy()
+                        self.ten_diem_bat_dau = ""
+                        
+                        self.distance_old = 1000
+                        self.xoay_goc = 1
+                        self.so_lan_check_vi_tri_xe = 0
+                        self.xac_dinh_vi_tri_xe = 0
+                        AGVConfig_2.toa_do_tam_xe_mm = None
+                        AGVConfig_2.goc_hcn = None
+                        AGVConfig_2.diem_gan_nhat = None
+                        AGVConfig_2.xac_dinh_vi_tri_xe = 0
+                        self.hoan_thanh_den_vi_tri_dich = False
 
             # cập nhật cả self.list_data và self.data_thong_tin_nang_ha khi có tín hiệu điểm đích mới, để đảm bảo rằng khi có tín hiệu điểm đích mới thì sẽ tạo lại đường đi mới và thông tin nâng hạ mới
             tien_max, re_max, tin_hieu_input, tin_hieu_tam_thoi =  self.convert_tin_hieu(AGVConfig.tin_hieu_nhan, AGVConfig.name_agv, 
@@ -592,7 +605,8 @@ class detect_data_sent_driver:
                     toa_do_diem_dich_tiep_theo = [int(world_x_mm), int(world_y_mm)]
                     angle_deg_2 = tinh_luong_giac.angle_with_ox(toa_do_diem_dich, toa_do_diem_dich_tiep_theo) * 180 / math.pi
 
-
+                    
+                    
                     # print("ten_diem_dau", ten_diem_dau)
                     # print("ten_diem_dich", ten_diem_dich)
 
@@ -714,11 +728,11 @@ class detect_data_sent_driver:
                                             if self.test_tranh_nhau == 1 and len(AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["paths"]) != 0:
                                                 self.stt_list_data = 1
                                                 # test khi không có dktt
-                                                paths = AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["paths"]
-                                                del paths[0]
-                                                AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["paths"] = paths
-                                                if len(AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["paths"]) >= 2:
-                                                    AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"] = paths[1]
+                                                # paths = AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["paths"]
+                                                # del paths[0]
+                                                # AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["paths"] = paths
+                                                # if len(AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["paths"]) >= 2:
+                                                #     AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"] = paths[1]
                                             else:
                                                 self.stt_list_data += 1
                                         
@@ -830,7 +844,6 @@ class detect_data_sent_driver:
                         if (self.thong_tin_nang_ha["trang_thai"] != "xoay_agv_song_song" and self.thong_tin_nang_ha["trang_thai"] != "xoay_agv_vuong_goc"):
                             self.thong_tin_nang_ha["toa_do_tam_thoi"] = []
 
-                    AGVConfig_2.vi_tri_hien_tai = ten_diem_dau
                     toa_do_pixel = [AGVConfig.danh_sach_diem[ten_diem_dau][0], AGVConfig.danh_sach_diem[ten_diem_dau][1]]
                     world_x_mm = (toa_do_pixel[0] - center_px[0]) * resolution_mm
                     world_y_mm = (toa_do_pixel[1] - center_px[1]) * resolution_mm
@@ -843,7 +856,62 @@ class detect_data_sent_driver:
 
                     AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["diem_tiep_theo"] = ten_diem_dich
 
+                    # xử lý đường cong
+                    ten_duong_1 = f"{ten_diem_dau}_{ten_diem_dich}"
+                    ten_duong_2 = f"{ten_diem_dich}_{ten_diem_dau}"
                     
+                    ten_duong_thuc_te = ten_duong_1 if ten_duong_1 in AGVConfig.danh_sach_duong else (ten_duong_2 if ten_duong_2 in AGVConfig.danh_sach_duong else None)
+
+                    toa_do_diem_kiem_soat = []
+                    diem_A = []
+                    diem_B = []
+                    if not ten_duong_thuc_te:
+                        print("Đường ten_duong_1 hoặc ten_duong_2 không tồn tại trong danh sách đường.", ten_duong_1, ten_duong_2)
+                        # X1_H04_C_X1-H04 H04_X1_C_H04-X1
+                    else:
+                        # "C11_C12": [["C11","C12"],"curve","C11-C12"]
+                        if AGVConfig.danh_sach_duong[ten_duong_thuc_te][1] == "curve":
+                            # 1. Lấy thông tin đường và các điểm tọa độ
+                            path_info = AGVConfig.danh_sach_duong[ten_duong_thuc_te]
+                            # diem_dau = AGVConfig.danh_sach_diem[ten_diem_dau][:2]   # Điểm bắt đầu
+                            # diem_cuoi = AGVConfig.danh_sach_diem[ten_diem_dich][:2]  # Điểm kết thúc
+                            diem_kiem_soat = AGVConfig.danh_sach_diem[path_info[2]][:2]   # Điểm kiểm soát (lấy từ index 3 của path_info)
+                            world_x_mm = (diem_kiem_soat[0] - center_px[0]) * resolution_mm
+                            world_y_mm = (diem_kiem_soat[1] - center_px[1]) * resolution_mm
+                            toa_do_diem_kiem_soat = [int(world_x_mm), int(world_y_mm)]
+
+                            # print("--------------", [AGVConfig.danh_sach_diem[ten_diem_dau][0], AGVConfig.danh_sach_diem[ten_diem_dau][1]], diem_dau)
+                            # print("--------------", diem_cuoi, diem_kiem_soat, path_info)
+
+                            # Giả sử hướng hiện tại của AGV lấy từ hệ thống (đổi ra radian)
+                            huong_hien_tai_rad = AGVConfig.huong_agv_do_thuc_rad
+                            tam_nhin = AGVConfig_2.tam_nhin_duong_cong
+                            sai_so_dich = 5
+                            buoc_nhin_xa_huong = 500 # Khoảng cách cộng thêm để tìm điểm định hướng
+                            toa_do_agv = AGVConfig.toa_do_agv_mm
+
+                            # 2. GỌI HÀM TÍNH TOÁN ĐIỀU HƯỚNG
+                            reached, diem_A, diem_B, diem_Sau_A, goc_target, sai_so = tim_duong_di.calculate_agv_guidance(
+                                toa_do_agv, huong_hien_tai_rad, self.toa_do_diem_dau, toa_do_diem_kiem_soat, self.toa_do_diem_dich, tam_nhin, sai_so_dich, buoc_nhin_xa_huong
+                            )
+                            
+                            # print("diem_A", diem_A)
+                            # print("diem_B", diem_B, toa_do_agv)
+                    if len(diem_A) != 0:
+                        self.toa_do_diem_cong_1 = [int(diem_A[0]), int(diem_A[1])]
+                    else:
+                        self.toa_do_diem_cong_1 = []
+                    if len(diem_B) != 0:
+                        self.toa_do_diem_cong_2 = [int(diem_B[0]), int(diem_B[1])]
+                    else:
+                        self.toa_do_diem_cong_2 = []
+                    if len(toa_do_diem_kiem_soat) != 0:
+                        self.toa_do_diem_kiem_soat = [int(toa_do_diem_kiem_soat[0]), int(toa_do_diem_kiem_soat[1])]
+                    else:
+                        self.toa_do_diem_kiem_soat = []
+
+                    # self.toa_do_diem_kiem_soat = toa_do_diem_kiem_soat
+
                     # if da_nang_xong == 1:
                     #     webserver.tin_hieu_nhan[name_agv]["trang_thai"] = "nang"
                     #     webserver.tin_hieu_nhan[name_agv]["dich_den"] = "P48"
@@ -852,7 +920,9 @@ class detect_data_sent_driver:
                     #     webserver.tin_hieu_nhan[name_agv]["dich_den"] = "P15"
         
                     index = None
+                    # print("self.den_diem_gan_nhat", self.den_diem_gan_nhat)
                     if self.den_diem_gan_nhat == False:
+                        print("00000000000000", ten_diem_dau, self.duong_di_ly_tuong)
                         if ten_diem_dau in self.duong_di_ly_tuong or ten_diem_dich in self.duong_di_ly_tuong:
                             if ten_diem_dau in self.duong_di_ly_tuong:
                                 index = self.duong_di_ly_tuong.index(ten_diem_dau)
@@ -865,6 +935,8 @@ class detect_data_sent_driver:
                                 self.toa_do_dich_ly_tuong = [int(world_x_mm), int(world_y_mm)]
                             else:
                                 self.toa_do_dich_ly_tuong = self.toa_do_diem_dich
+                        else:
+                            self.toa_do_dich_ly_tuong = self.toa_do_diem_dich
                     else:
                         self.toa_do_dich_ly_tuong = self.toa_do_diem_dich
                         
@@ -893,6 +965,10 @@ class detect_data_sent_driver:
 
                     if da_ha_xong == 1:
                         self.setup_vung_loai_bo = 0
+
+                    # test với self.setup_vung_loai_bo == 1
+                    # self.setup_vung_loai_bo = 1
+
 
                     if self.setup_vung_loai_bo == 1:
                         if len(AGVConfig.vung_loai_bo_x1y1x2y2) == 0:
@@ -1066,6 +1142,9 @@ class detect_data_sent_driver:
                         if self.di_chuyen_luon["update"] == 1 and self.di_chuyen_luon["van_toc_min"] is not None and self.di_chuyen_luon["delta"] is not None:
                             khoang_cach_dich = 25
                             delta_kc_dich = 20
+                        elif self.di_chuyen_luon["update"] == 1 and self.di_chuyen_luon["van_toc_di_chuyen_luon"] is not None:
+                            khoang_cach_dich = 60
+                            delta_kc_dich = 10
                         else:
                             khoang_cach_dich = AGVConfig_2.khoang_cach_dich_min + add_kc_di_chuyen_luon
                             delta_kc_dich = 20 - del_kc_di_chuyen_luon
@@ -1080,17 +1159,38 @@ class detect_data_sent_driver:
                                                     delta_distan_2 > delta_kc_dich)):
                                     self.convert_data_run_agv["run_diem_2"] = "OK"
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                                     # test 
                                     
-                                    danh_sach_diem_dich = ["P53", "P15"]
-                                    if ten_diem_dich in danh_sach_diem_dich:
-                                        index = danh_sach_diem_dich.index(ten_diem_dich)
-                                        if index < len(danh_sach_diem_dich) - 1:
-                                            AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["trang_thai"] = "nang"
-                                            AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"] = danh_sach_diem_dich[index + 1]
-                                        else:
-                                            AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["trang_thai"] = "nang"
-                                            AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"] = danh_sach_diem_dich[0]
+                                    # danh_sach_diem_dich = ["P53", "P15"]
+                                    # if ten_diem_dich in danh_sach_diem_dich:
+                                    #     index = danh_sach_diem_dich.index(ten_diem_dich)
+                                    #     if index < len(danh_sach_diem_dich) - 1:
+                                    #         AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["trang_thai"] = "nang"
+                                    #         AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"] = danh_sach_diem_dich[index + 1]
+                                    #     else:
+                                    #         AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["trang_thai"] = "nang"
+                                    #         AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"] = danh_sach_diem_dich[0]
                             else:
                                 if (distance <= 25):
                                     self.convert_data_run_agv["run_diem_2"] = "OK"

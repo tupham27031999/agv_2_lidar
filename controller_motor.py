@@ -1,6 +1,7 @@
 import math
 from ham_logic import tinh_luong_giac, angle_and_distance as ad
 import numpy as np
+from config import AGVConfig
 
 
 # ================== HÀM TIỆN ÍCH ==================
@@ -88,10 +89,15 @@ def agv_bam_duong(
     omega_max = 10.0
     if di_chuyen_luon is not None:
         if di_chuyen_luon["update"] == 1 and di_chuyen_luon["van_toc_di_chuyen_luon"] is not None:
-            k_yaw = 5.0 # độ bám hướng
-            k_ct = 50.0 # bám ngang
-            omega_max = 100.0 # AGV được phép quay nhanh tối đa bao nhiêu 2 độ/s
-            v_max = di_chuyen_luon["van_toc_di_chuyen_luon"]
+            
+            k_ct = max((int(abs(e_yaw *180 / math.pi)) * 4), 60) # bám ngang
+            k_yaw = max(10.0, 80 - k_ct) # độ bám hướng
+            # k_ct = 100
+            # k_yaw = 5
+            omega_max = 200.0 # AGV được phép quay nhanh tối đa bao nhiêu 2 độ/s
+            edit_v = max((2000 + (30 - int(abs(e_yaw *180 / math.pi))) * 100), 2000)
+            v_max = min(di_chuyen_luon["van_toc_di_chuyen_luon"], edit_v)
+            # v_max = di_chuyen_luon["van_toc_di_chuyen_luon"]
             v = v_max
         else:
             if dist_to_goal <= 400:
@@ -106,11 +112,14 @@ def agv_bam_duong(
         omega_max = 0.4
 
     # ================== 7. Stanley cải tiến ==================
+    if AGVConfig.run_state == 1:
+        print(k_yaw , e_yaw ,k_ct , math.atan2(e_ct, max(abs(v), 50)), e_yaw * 180 / math.pi)
     omega = k_yaw * e_yaw + k_ct * math.atan2(e_ct, max(abs(v), 50))
 
     # ================== 8. Giới hạn quay ==================
     omega = max(min(omega, omega_max), -omega_max)
-
+    if AGVConfig.run_state == 1:
+        print(omega, "omega")
     # ================== 9. Điều kiện dừng chính xác ==================
     if dist_to_goal < 10:
         v = 0

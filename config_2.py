@@ -36,6 +36,14 @@ def read_json_file(file_path):
 
 PATH_PHAN_MEM = edit_path(os.path.dirname(os.path.realpath(__file__)))
     
+# dường cong bezier, danh_sach_duong = {"C11_C12_C_C11-C12": [
+                                                        #     [
+                                                        #         "C11",
+                                                        #         "C12"
+                                                        #     ],
+                                                        #     "curve",
+                                                        #     "C11-C12"
+                                                        # ]}
 # paths
 if os.name == "nt":
     print("Hệ điều hành là Windows")
@@ -150,7 +158,6 @@ class AGVConfig_2:
     xac_dinh_vi_tri_xe = 0
     
     nang_vuong_goc = 0
-    vi_tri_hien_tai = ""
     them_vi_tri_xe_ban_do = 0
     goc_xoay = 0
 
@@ -170,7 +177,7 @@ class AGVConfig_2:
                                             "van_toc_min": 400, "khoang_nhin_phia_truoc": None, "delta": None, "khong_xoay": None}}, 
                         "loai_3": {"danh_sach_diem_dau": None,
                                     "danh_sach_diem_dich": ["C"],   
-                                    "data": {"update": 1, "co_huong": 0, "khong_huong": 1,  "van_toc_di_chuyen_luon": 2000, 
+                                    "data": {"update": 1, "co_huong": 0, "khong_huong": 1,  "van_toc_di_chuyen_luon": 4000, 
                                             "van_toc_min": None, "khoang_nhin_phia_truoc": 200,  "delta": [500, 50],  "khong_xoay": 1}},
                         "loai_4": {"danh_sach_diem_dau": ["C"],
                                     "danh_sach_diem_dich": ["E"],                   
@@ -219,5 +226,7 @@ class AGVConfig_2:
     stop_rmse = False # dừng xe do lớn hơn ngưỡng yêu cầu
     stop_vat_can = False # dừng xe do có vật cản ở gần
     loi_an_toan = "" # tên lỗi an toàn do cảm biến lidar phát hiện
+
+    tam_nhin_duong_cong = 300
 
     

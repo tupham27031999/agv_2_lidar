@@ -158,7 +158,7 @@ class xu_ly_du_lieu_lidar:
             # print(f"scan_all shape: {scan_all.shape}, arr_test shape: {arr_test.shape}")
             # print(f"tam_x_pixel: {tam_x_pixel}, tam_y_pixel: {tam_y_pixel}, goc_agv: {goc_agv}")
             # print(f"cap nhat vi tri: {cap_nhat_vi_tri}, cap nhat ban do: {cap_nhat_ban_do}, update_all_point_in_map: {AGVConfig.update_all_point_in_map}")
-            if arr_test.shape[0] > 10:
+            if arr_test.shape[0] > 1:
                 center_px, pts_world, rmse, tam_x_mm, tam_y_mm, tam_x_pixel, \
                     tam_y_pixel, goc_agv, resolution_mm, AGVConfig.danh_sach_diem_vat_can = self.detect_gicp_lidar.process_scan(arr_test, integrate=True, 
                                                                                 x_agv_pixel = tam_x_pixel, y_agv_pixel = tam_y_pixel, 

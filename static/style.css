@@ -635,9 +635,9 @@ body {
 
 /* --- Path Styles --- */
 .path-svg-line {
+    fill: none;
     stroke: #3498db;
     stroke-width: 3;
-    fill: none;
     /* Giúp đường không bị to ra khi zoom, luôn giữ độ dày 3px trên màn hình */
     vector-effect: non-scaling-stroke;
     stroke-linecap: round;

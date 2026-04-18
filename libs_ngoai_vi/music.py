@@ -76,7 +76,7 @@ thoi_gian_phat_nhac = {"2": ["lui_phai", "lui_trai"],
                        "4": ["da_den_dich", "re_phai", "re_trai", "dang_den_vi_tri_cho", "vung_2", "vung_3", "sap_den_dich"],
                        "5": ["co_vat_can", "dang_ha_hang", "het_pin", "dang_nang_hang", "dung_hoat_dong", "loi_motor_nang_ha", "icp_sai_vi_tri"],
                        "10": ["vung_1"],
-                       "300": ["yeu_anh"]}
+                       "300": ["e_cua_ngay_hom_qua"]}
 # index = 0
 index = random.randint(0, len(thoi_gian_phat_nhac["300"]) - 1)
 name_none = thoi_gian_phat_nhac["300"][index]

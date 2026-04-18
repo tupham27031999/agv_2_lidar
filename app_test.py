@@ -352,8 +352,10 @@ def add_path_temp():
     data = request.json
     name = data.get('name')
     nodes = data.get('nodes') # [P1, P2]
+    control_point = data.get('control_point', None) # [cx, cy] hoặc None
     if name and nodes:
-        AGVConfig.danh_sach_duong[name] = [nodes, "none"]
+        path_type = "curve" if control_point else "none"
+        AGVConfig.danh_sach_duong[name] = [nodes, path_type, control_point]
         print("đã thêm đường vào danh sách tạm thời: AGVConfig.danh_sach_duong")
         return jsonify({
             "status": "success", 
@@ -652,6 +654,7 @@ def restore_backup():
         return jsonify({'status': 'success', 'message': f'Đã khôi phục {filename} từ bản sao lưu {timestamp}'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': f'Lỗi khi khôi phục file: {str(e)}'}), 500
+
 
 
 

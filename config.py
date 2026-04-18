@@ -7,8 +7,6 @@ import math
 import socket
 from libs_file import remove
 
-def edit_path(input):
-    return input.replace("\\", "/")
 
 def get_occupancy_image(log_odds_map=None):
     log_odds = log_odds_map if log_odds_map is not None else np.zeros((100, 100))  # Default to a blank image if no map is provided
@@ -72,7 +70,7 @@ def find_com_ports():
     ports = serial.tools.list_ports.comports()
     return [port.device for port in ports]
 
-PATH_PHAN_MEM = edit_path(os.path.dirname(os.path.realpath(__file__)))
+PATH_PHAN_MEM = (os.path.dirname(os.path.realpath(__file__))).replace("\\", "/")
 path_logo = remove.tao_folder(os.path.join(PATH_PHAN_MEM, "static", "logo.png"))
 path_map_folder = remove.tao_folder(os.path.join(PATH_PHAN_MEM, "data_input_output", "maps"))
 path_folder_danh_sach_diem = remove.tao_folder(os.path.join(PATH_PHAN_MEM, "data_input_output", "point_lists")) # File lưu danh sách điểm
@@ -141,7 +139,7 @@ class AGVConfig:
     ty_le_mm_pixel = 20
     thoi_gian_cap_nhat = 500 # ms , cập nhật vị trí, hướng, danh_sach_diem_lidar_icp, danh_sach_duong_di 
     
-    lidar_display_skip = 3 # Lấy mỗi điểm thứ N để hiển thị (giảm tải cho Web). 1 là lấy hết, 2 là giảm 1/2, 3 là giảm 1/3...
+    lidar_display_skip = 1 # Lấy mỗi điểm thứ N để hiển thị (giảm tải cho Web). 1 là lấy hết, 2 là giảm 1/2, 3 là giảm 1/3...
 
 
     # Dữ liệu trạng thái nhận từ các AGV
@@ -154,7 +152,7 @@ class AGVConfig:
     # ERROR,      // Lỗi kỹ thuật
     # OFFLINE     // Mất kết nối
     tin_hieu_nhan = {
-                    "agv1": {"vi_tri_hien_tai": "X1", "diem_tiep_theo": "", "dich_den": "", "trang_thai_agv_gui": "", "trang_thai_gui_agv": "", "message": "None", 
+                    "agv1": {"vi_tri_hien_tai": "", "diem_tiep_theo": "", "dich_den": "", "trang_thai_agv_gui": "", "trang_thai_gui_agv": "", "message": "None", 
                              "danh_sach_duong_di": [], "paths": [], "stop": False, "da_den_dich": 0, "di_chuyen_khong_hang": False},
                     "agv2": {"vi_tri_hien_tai": "", "diem_tiep_theo": "", "dich_den": "", "trang_thai_agv_gui": "", "trang_thai_gui_agv": "", "message": "None", 
                              "danh_sach_duong_di": [], "paths": [], "stop": False, "da_den_dich": 0, "di_chuyen_khong_hang": False},
@@ -187,7 +185,9 @@ class AGVConfig:
 
     toa_do_agv_pixel = [1700, 2449]
     huong_agv_do_img = 30 # góc hợp với trục Ox
-    danh_sach_duong_di = [[1670, 2449], [1675, 2513], [1679, 2540]] # danh sách tọa độ agv sẽ đi đến 
+    danh_sach_duong_di = ["C20", "C21"] # danh sách tên các điểm agv sẽ đi qua
+    # danh_sach_duong_di mới
+    # danh_sach_duong_di = ["C20", "C21"]
     kich_thuoc_agv = [40,20] # pixel, dùng để vẽ hình chữ nhật đại diện cho AGV trên bản đồ
     kich_thuoc_mapping_update = [1000,1000]
 
@@ -195,13 +195,13 @@ class AGVConfig:
     huong_agv_do_thuc_rad = np.radians(60)
 
     danh_sach_tien_max = [10000, 9000, 8500, 8000, 7000, 6500, 6000, 5500, 5000, 4500, 4000, 3500, 3000, 2500, 2000, 1500, 1000, 500]
-    danh_sach_re_max = [1000, 900, 800, 700, 600, 500, 400, 300, 250, 200]
+    danh_sach_re_max = [1800, 1700, 1600, 1500, 1400, 1300, 1200, 1100, 1000, 900, 800, 700, 600, 500, 400, 300, 250, 200]
     # Quản lý điểm tạm thời
     che_do_them_diem = False
     che_do_sua_diem = False
     che_do_them_duong = False
     che_do_xoa_duong = False
-    danh_sach_duong = {} # Format: {"P1_P2": [["P1", "P2"], "none"], ...} # dùng để lưu các đường
+    danh_sach_duong = {} # Format: {"P1_P2": [["P1", "P2"], "curve", "P3"], ...}
     danh_sach_diem = {} # Format: {"P1": [x, y, "loai", huong], ...}
     # Lấy danh sách bản đồ bằng cách liệt kê các thư mục con trong path_map_folder
     danh_sach_ban_do = [d for d in os.listdir(path_map_folder) if os.path.isdir(os.path.join(path_map_folder, d))] if os.path.exists(path_map_folder) else []
@@ -333,7 +333,7 @@ class AGVConfig:
                 cls.danh_sach_diem = {}
         else:
             cls.danh_sach_diem = {}
-        print("Loaded points:", cls.danh_sach_diem)
+        
 
     @classmethod
     def save_points_to_file(cls, name):
@@ -409,7 +409,6 @@ class AGVConfig:
                 cls.danh_sach_duong = {}
         else:
             cls.danh_sach_duong = {}
-        print("Loaded paths:", cls.danh_sach_duong)
 
     @classmethod
     def save_paths_to_file(cls, name):

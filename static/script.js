@@ -136,6 +136,7 @@ const MAP_REFRESH_INTERVAL = 1000; // Cập nhật bản đồ mỗi 1 giây khi
 
 let currentEditingName = null; // Lưu tên cũ khi đang sửa
 let firstPointForPath = null; // Lưu điểm thứ nhất khi đang tạo đường
+let secondPointForPath = null; // Lưu điểm thứ hai khi chờ chọn điểm uốn
 let firstCornerForDelete = null; // Lưu góc thứ nhất của hình chữ nhật xóa
 
 // Biến quản lý Zoom/Pan cho Mapping
@@ -150,6 +151,55 @@ if (!window.pointsCache) window.pointsCache = {};
 if (!window.pathsCache) window.pathsCache = {};
 if (!window.deleteAreasCache) window.deleteAreasCache = [];
 
+window.handlePathCreation = function(clickedPointName, clickPos) {
+    const isCurveMode = document.getElementById('check-is-curve').checked;
+
+    if (!clickedPointName) return; // Chỉ xử lý khi click vào điểm đã có
+
+    if (!firstPointForPath) {
+        firstPointForPath = clickedPointName;
+        console.log("Chọn điểm đầu:", firstPointForPath);
+        return;
+    }
+
+    if (!secondPointForPath) {
+        if (clickedPointName === firstPointForPath) return;
+        secondPointForPath = clickedPointName;
+        console.log("Chọn điểm cuối:", secondPointForPath);
+
+        if (!isCurveMode) {
+            const name = `${firstPointForPath}_${secondPointForPath}`;
+            addPathToServer(name, [firstPointForPath, secondPointForPath], null);
+            firstPointForPath = null;
+            secondPointForPath = null;
+        } else {
+            console.log("Hãy chọn điểm thứ 3 làm điểm kiểm soát đường cong.");
+        }
+        return;
+    }
+
+    // Nếu đã có điểm 1 và 2, và đang ở chế độ đường cong
+    if (isCurveMode) {
+        const controlPointName = clickedPointName;
+        const name = `${firstPointForPath}_${secondPointForPath}`;
+        addPathToServer(name, [firstPointForPath, secondPointForPath], controlPointName);
+        firstPointForPath = null;
+        secondPointForPath = null;
+    }
+};
+
+async function addPathToServer(name, nodes, controlPoint) {
+    const response = await fetch('/api/add_path_temp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, nodes, control_point: controlPoint })
+    });
+    if (response.ok) {
+        const result = await response.json();
+        window.pathsCache[name] = result.new_path;
+        window.addPathLine(name, nodes[0], nodes[1], result.new_path[1], controlPoint);
+    }
+}
 
 /**
  * Logic điều khiển thủ công
