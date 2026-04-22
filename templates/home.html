@@ -11,6 +11,8 @@
     <link rel="icon" href="{{ url_for('static', filename='logo.png') }}">
     <!-- Thư viện OpenSeadragon Local -->
     <script src="{{ url_for('static', filename='openseadragon/openseadragon.min.js') }}"></script>
+    <!-- Thư viện Ace Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.js"></script>
     
 </head>
 <body>
@@ -28,6 +30,9 @@
             <div class="header-tabs">
                 <button class="tab-btn active" onclick="openTab(event, 'homeTab')">
                     <i class="fa-solid fa-house"></i> {{ config.tab_1 }}
+                </button>
+                <button class="tab-btn" onclick="openTab(event, 'codeTab')">
+                    <i class="fa-solid fa-code"></i> {{ config.tab_4 }}
                 </button>
                 <button class="tab-btn" onclick="openTab(event, 'mappingTab')">
                     <i class="fa-solid fa-map-location-dot"></i> {{ config.tab_3 }}
@@ -189,6 +194,17 @@
                             </div>
                         </div>
 
+                        <!-- Nhóm Quản lý AprilTag -->
+                        <div class="control-section">
+                            <div class="section-title">Quản lý AprilTag</div>
+                            <div class="input-with-btn">
+                                <input type="number" id="new-tag-id" placeholder="Nhập ID thẻ mới...">
+                                <button class="save-btn" onclick="generateAprilTag()" title="Tạo mã AprilTag mới">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Nhóm Vị trí thủ công -->
                         <div class="control-section">
                             <div class="section-title">Vị trí thủ công</div>
@@ -253,6 +269,66 @@
                             </button>
                         </div>
 
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Code -->
+        <div id="codeTab" class="tab-content">
+            <div class="code-editor-layout">
+                <div class="code-sidebar">
+                    <div class="toolbar-header"><i class="fa-solid fa-scroll"></i> Danh sách Script</div>
+                    <div class="script-list" id="script-list-container">
+                        <!-- Load dynamically -->
+                    </div>
+                    <button class="action-btn btn-run" onclick="createNewScript()" style="margin: 10px;">
+                        <i class="fa-solid fa-plus"></i> Tạo script mới
+                    </button>
+                </div>
+                
+                <div class="editor-main">
+                    <div class="editor-toolbar">
+                        <input type="text" id="script-name" placeholder="Tên script...">
+                        <button class="save-btn" onclick="saveCurrentScript()" title="Lưu Script"><i class="fa-solid fa-floppy-disk"></i></button>
+                        <button id="btn-run-script" class="save-btn" style="background-color: #3498db;" onclick="toggleScriptExecution()" title="Chạy Script"><i class="fa-solid fa-play"></i></button>
+                        <button class="save-btn" style="background-color: #e74c3c;" onclick="deleteCurrentScript()" title="Xóa Script"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                    <!-- Div thay thế cho textarea để nhúng Ace Editor -->
+                    <div id="code-editor"></div>
+                    
+                    <div class="code-help">
+                        <h4 onclick="toggleCodeHelp()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fa-solid fa-circle-info"></i> Hướng dẫn cú pháp</span>
+                            <i id="help-toggle-icon" class="fa-solid fa-chevron-up"></i>
+                        </h4>
+                        <div id="help-content" class="help-grid">
+                            <div class="help-col">
+                                <strong>Đầu vào (Conditions):</strong>
+                                <ul>
+                                    {% for item, desc in config.huong_dan_code.dau_vao %}
+                                    <li><code>{{ item }}</code>: {{ desc }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="help-col">
+                                <strong>Đầu ra (Actions):</strong>
+                                <ul>
+                                    {% for item, desc in config.huong_dan_code.dau_ra %}
+                                    <li><code>{{ item }}</code>: {{ desc }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="help-col">
+                                <strong>Cấu trúc:</strong>
+                                <ul>
+                                    {% for item, desc in config.huong_dan_code.cau_truc %}
+                                    <li><code>{{ item }}</code>: {{ desc }}</li>
+                                    {% endfor %}
+                                    <li><code>bien_nho</code>: Dùng để lưu giá trị bền vững (Ví dụ: <code>bien_nho['goc'] = 90</code>)</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -537,11 +613,32 @@
                     <label>Góc (Ox):</label>
                     <input type="number" id="m-point-heading" value="0.0">
                 </div>
+                <div class="input-group">
+                    <label>Mã AprilTag (SVG):</label>
+                    <select id="m-point-tag">
+                        <option value="">-- Không sử dụng --</option>
+                    </select>
+                </div>
             </div>
             <div class="modal-footer">
                 <button id="m-btn-delete" class="modal-btn delete" onclick="deletePoint()" style="display: none;">Xóa điểm</button>
                 <button class="modal-btn cancel" onclick="closePointModal()">Hủy</button>
                 <button class="modal-btn save" onclick="saveNewPoint()">Lưu điểm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Thông báo Lưu Script khi chuyển đổi -->
+    <div id="unsaved-script-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Thay đổi chưa được lưu</h3>
+            <div class="modal-body">
+                <p id="unsaved-modal-msg">Script hiện tại có thay đổi chưa lưu. Bạn có muốn lưu lại trước khi chuyển không?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn delete" id="btn-no-save">Không lưu</button>
+                <button class="modal-btn cancel" onclick="closeUnsavedModal()">Hủy</button>
+                <button class="modal-btn save" id="btn-yes-save">Lưu</button>
             </div>
         </div>
     </div>

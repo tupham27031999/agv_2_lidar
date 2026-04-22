@@ -11,6 +11,8 @@ import numpy as np
 import config
 from datetime import datetime
 import json
+import ast
+from them_1_ma_apriltag import generate_single_tag
 
 PATH_DATA_IN_OUT = config.PATH_PHAN_MEM + "/data_input_output"
 
@@ -419,6 +421,229 @@ def manual_control():
     
     return jsonify({"status": "success", "data": config.AGVConfig.dieu_khien_agv})
 
+@app.route('/api/code/activate', methods=['POST'])
+def activate_script():
+    """API để kích hoạt một script cụ thể chạy ngầm"""
+    name = request.json.get('name')
+    if not name:
+        AGVConfig.ten_script_dang_chay = ""
+        AGVConfig.noi_dung_script_dang_chay = ""
+        AGVConfig.du_lieu_script_dang_chay = {}
+        AGVConfig.bien_nho_code = {} # Reset bộ nhớ khi tắt script
+        return jsonify({"status": "success", "active": ""})
+
+    file_path = os.path.join(config.path_folder_scripts, f"{name}.json")
+    if os.path.exists(file_path):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        AGVConfig.bien_nho_code = {} # Reset bộ nhớ khi đổi script mới
+        AGVConfig.ten_script_dang_chay = name
+        AGVConfig.noi_dung_script_dang_chay = data.get('content', '')
+        AGVConfig.du_lieu_script_dang_chay = data
+        return jsonify({"status": "success", "active": name})
+    return jsonify({"status": "error", "message": "Không tìm thấy file"}), 404
+
+@app.route('/api/code/resume', methods=['POST'])
+def resume_script():
+    """API để giải phóng trạng thái chờ của script, cho phép AGV chạy tiếp"""
+    AGVConfig.stop_code_resume = False
+    # Khi tiếp tục, ta cũng có thể chuyển run_state về 0 (RUN) nếu cần
+    # AGVConfig.run_state = 0 
+    return jsonify({"status": "success", "message": "Script đã tiếp tục chạy"})
+
+@app.route('/api/code/list')
+def list_scripts():
+    scripts = [f.replace('.json', '') for f in os.listdir(config.path_folder_scripts) if f.endswith('.json')]
+    return jsonify(scripts)
+
+@app.route('/api/code/save', methods=['POST'])
+def save_script():
+    data = request.json
+    name = data.get('name')
+    content = data.get('content')
+    if not name or content is None:
+        return jsonify({"status": "error", "message": "Dữ liệu không hợp lệ"}), 400
+    
+    # Kiểm tra lỗi cú pháp Python cơ bản trước khi lưu
+    try:
+        ast.parse(content)
+    except SyntaxError as e:
+        return jsonify({
+            "status": "error", 
+            "message": f"Lỗi cú pháp tại dòng {e.lineno}: {e.msg}"
+        }), 400
+
+    file_path = os.path.join(config.path_folder_scripts, f"{name}.json")
+    try:
+        script_data = {
+            "name": name,
+            "content": content,
+            "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(script_data, f, indent=4, ensure_ascii=False)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/code/load/<name>')
+def load_script(name):
+    file_path = os.path.join(config.path_folder_scripts, f"{name}.json")
+    if os.path.exists(file_path):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return jsonify({"status": "success", "content": data.get('content', '')})
+    return jsonify({"status": "error", "message": "File không tồn tại"}), 404
+
+@app.route('/api/april_tags/generate', methods=['POST'])
+def generate_tag_api():
+    """API để tạo một mã AprilTag mới dựa trên ID"""
+    data = request.json
+    tag_id = data.get('id')
+    if tag_id is None:
+        return jsonify({"status": "error", "message": "ID không hợp lệ"}), 400
+    
+    try:
+        tag_id = int(tag_id)
+        # Sử dụng KICH_THUOC từ AGVConfig và path_ma_AprilTag từ config.py
+        path = generate_single_tag(tag_id, config.path_ma_AprilTag, AGVConfig.KICH_THUOC)
+        return jsonify({"status": "success", "path": path})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/code/delete', methods=['POST'])
+def delete_script():
+    name = request.json.get('name')
+    file_path = os.path.join(config.path_folder_scripts, f"{name}.json")
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        return jsonify({"status": "success"})
+    return jsonify({"status": "error", "message": "File không tồn tại"}), 404
+
+def run_script_interpreter():
+    """
+    Trình thực thi Python Script theo phong cách của các hãng AGV lớn.
+    Hàm này tạo ra một môi trường cô lập, cung cấp các hàm điều khiển xe
+    và các biến trạng thái để script của người dùng có thể đọc/ghi.
+    """
+
+    if not AGVConfig.noi_dung_script_dang_chay:
+        return
+    print(AGVConfig.bien_nho_code)
+    try:
+        # 2. Định nghĩa các hàm "Đầu ra" (Actions) cho người dùng
+        def nang_ha_xe(trang_thai):
+            AGVConfig.nang_ha_xe_code = trang_thai
+
+        def bam_coi(music_name="bam_coi"):
+            AGVConfig.music_name_code = music_name
+
+        def dung(giay):
+            # Ở đây mô phỏng đơn giản, thực tế nên dùng biến đếm thời gian
+            AGVConfig.dung_trong_giay_code = giay
+            # print(giay, type(giay)) # None <class 'NoneType'>
+
+        def cho_lenh():
+            """Hàm dừng kịch bản và đợi tín hiệu từ bên ngoài (API)"""
+            AGVConfig.stop_code_resume = True
+
+        def set_toc_do_tien(v):
+            AGVConfig.van_toc_tien_max_code = v
+
+        def set_toc_do_re(v):
+            AGVConfig.van_toc_re_max_code = v
+
+        def xoay_goc(ang, mode=0):
+            AGVConfig.xoay_goc_code = ang
+            AGVConfig.xoay_goc_mode_code = mode
+            print(f"Script yêu cầu xoay góc {ang} độ, mode {mode}", type(ang), type(mode)) # test
+
+        def set_khoang_cach_an_toan(truoc, sau, canh):
+            AGVConfig.kc_an_toan_truoc_code = truoc
+            AGVConfig.kc_an_toan_sau_code = sau
+            AGVConfig.kc_an_toan_ben_canh_code = canh
+
+        def vung_loai_bo(mode, data):
+            """Thiết lập hiển thị và dữ liệu vùng loại bỏ chân xe"""
+            if data == None:
+                data = []
+            if AGVConfig.loai_bo_coc_xe["che_do_lay_mau"] == 0:
+                if mode == "on":
+                    if AGVConfig.da_cap_nhat_vung_loai_bo != "on" or AGVConfig.vung_loai_bo_x1y1x2y2 != data:
+                        AGVConfig.vung_loai_bo_x1y1x2y2 = data
+                        AGVConfig.update_pixel_exclusion_zones()
+                elif mode == "off":
+                    if AGVConfig.da_cap_nhat_vung_loai_bo != "off":
+                        AGVConfig.vung_loai_bo_x1y1x2y2 = data
+                        AGVConfig.vung_loai_bo_x1y1x2y2_pixel = data
+                else:
+                    if AGVConfig.da_cap_nhat_vung_loai_bo != None:
+                        AGVConfig.load_loai_bo(AGVConfig.loai_bo_coc_xe["ten_vung_loai_bo"])
+                        AGVConfig.update_pixel_exclusion_zones()
+                AGVConfig.da_cap_nhat_vung_loai_bo = mode
+            
+        def chay_script(name):
+            """Hàm thực thi một script khác đã được lưu"""
+            file_path = os.path.join(config.path_folder_scripts, f"{name}.json")
+            if os.path.exists(file_path):
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        script_content = data.get('content', '')
+                        # Thực thi script con với cùng môi trường safe_env
+                        if script_content:
+                            exec(script_content, {"__builtins__": {}}, safe_env)
+                except Exception as e:
+                    print(f"Lỗi khi thực thi script con '{name}': {e}")
+            else:
+                print(f"Cảnh báo: Không tìm thấy script '{name}' để chạy.")
+        # 3. Thiết lập môi trường "An toàn" (Sandbox)
+        # Chúng ta chỉ cho phép script truy cập vào các hàm và biến ta chỉ định
+        safe_env = {
+            # Các biến "Đầu vào" (Sensors/Status)
+            'vi_tri_hien_tai': AGVConfig.vi_tri_hien_tai_code,
+            'vi_tri_tiep_theo': AGVConfig.vi_tri_tiep_theo_code,
+            'vi_tri_diem_cuoi': AGVConfig.vi_tri_diem_cuoi_code,
+            'trang_thai': AGVConfig.trang_thai_code,
+            'april_tag': AGVConfig.april_tag_code,
+            'xy_lanh': AGVConfig.xy_lanh_code,
+            'khoang_cach_den_dich': AGVConfig.khoang_cach_den_dich_code,
+            'da_den_diem_tiep_theo': AGVConfig.da_den_diem_tiep_theo_code,
+            'van_toc_trai': AGVConfig.van_toc_phan_hoi_trai,
+            'van_toc_phai': AGVConfig.van_toc_phan_hoi_phai,
+            'goc_agv': AGVConfig.huong_agv_do_img,
+            'danh_sach_duong_di': AGVConfig.danh_sach_duong_di_code,
+            'bien_nho': AGVConfig.bien_nho_code,
+            
+            # Các hàm "Đầu ra" (Commands)
+            'nang_ha_xe': nang_ha_xe,
+            'bam_coi': bam_coi,
+            'dung': dung,
+            'cho_lenh': cho_lenh,
+            'set_toc_do_tien': set_toc_do_tien,
+            'set_toc_do_re': set_toc_do_re,
+            'xoay_goc': xoay_goc,
+            'set_khoang_cach_an_toan': set_khoang_cach_an_toan,
+            'vung_loai_bo': vung_loai_bo,
+            'chay_script': chay_script,
+            
+            # Các hàm thư viện cơ bản
+            'range': range,
+            'print': print,
+            'int': int,
+            'str': str,
+            'len': len
+        }
+
+        # 4. Thực thi kịch bản (Execution)
+        # exec() sẽ chạy toàn bộ code Python của người dùng trong môi trường safe_env
+        exec(AGVConfig.noi_dung_script_dang_chay, {"__builtins__": {}}, safe_env)
+
+    except Exception as e:
+        # Nếu code người dùng gõ sai logic (chia cho 0, gọi hàm không tồn tại...)
+        # ta bắt lỗi ở đây để không làm sập toàn bộ app.py
+        print(f"Lỗi logic trong script '{AGVConfig.ten_script_dang_chay}': {e}")
+
 def log_communication(log_type, timestamp_str, signal_value):
     """
     Ghi log giao tiếp vào file.
@@ -496,6 +721,16 @@ def tat_phan_mem():
     return False
 
 
+
+@app.route('/api/april_tags')
+def get_april_tags():
+    """API trả về danh sách các mã AprilTag (.svg) hiện có trong hệ thống"""
+    folder = config.path_ma_AprilTag
+    if not os.path.exists(folder):
+        return jsonify([])
+    # Lấy danh sách file và bỏ phần mở rộng .svg
+    tags = [f.replace('.svg', '') for f in os.listdir(folder) if f.endswith('.svg')]
+    return jsonify(tags)
 
 @app.route('/api/download_update/<path:filepath>')
 def download_update_file(filepath):
@@ -680,6 +915,9 @@ def icp_simulation_loop():
                 AGVConfig.dieu_khien_agv['trai'] = 0
                 AGVConfig.dieu_khien_agv['phai'] = 0
         # print(print(config.AGVConfig.dieu_khien_agv))
+
+        # Chạy trình thông dịch script tại mỗi vòng lặp 10Hz
+        run_script_interpreter()
 
         if AGVConfig.che_do_tao_ban_do:
             # Khởi tạo bản đồ mapping khi bắt đầu phiên quét mới (Transition False -> True)

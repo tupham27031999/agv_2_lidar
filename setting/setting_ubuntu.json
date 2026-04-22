@@ -9,7 +9,7 @@
     "khoang_cach_dich": 20,
     "duong_kinh_coc": 50,
     "min_samples": 1,
-    "thiet_lap_ket_noi": {"lidar": "on", "driver_motor": "on", "esp32": "on", "pin": "on", "process_lidar": "on"},
+    "thiet_lap_ket_noi": {"lidar": "off", "driver_motor": "off", "esp32": "off", "pin": "off", "process_lidar": "on"},
 
 
     "cong_esp32": ["/dev/esp32_loa", 115200],
@@ -34,7 +34,7 @@
     "khoang_cach_an_toan_ben_canh_re": [500, 700, 800],
     "khoang_cach_an_toan_duoi_re": [500, 500, 500],
 
-    "khoang_cach_an_toan_tren": [800, 1200, 1400],
+    "khoang_cach_an_toan_tren": [780, 1200, 1400],
     "khoang_cach_an_toan_ben_canh": [390, 410, 440],
     "khoang_cach_an_toan_duoi": [520, 520, 520],
 

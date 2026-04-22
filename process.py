@@ -190,9 +190,7 @@ class xu_ly_du_lieu_lidar:
         dang_re = self.detect_data_driver.dang_re
         # loai_bo_coc_xe = {"che_do_lay_mau": 0,"ten_vung_loai_bo": ten_vung_loai_bo_last, "luu_vung_loai_bo": False, "update": 0}
         che_do_lay_mau = AGVConfig.loai_bo_coc_xe["che_do_lay_mau"]
-        di_chuyen_luon = self.detect_data_driver.di_chuyen_luon
-        xac_dinh_vi_tri_xe = self.xac_dinh_vi_tri_xe
-        loi_an_toan, scan_an_toan = self.scan_vat_can.detect(scan_xy, huong_agv_toa_do_xyz, di_thuan_nguoc, dang_re, che_do_lay_mau, xac_dinh_vi_tri_xe, di_chuyen_luon)
+        loi_an_toan, scan_an_toan = self.scan_vat_can.detect(scan_xy, huong_agv_toa_do_xyz, di_thuan_nguoc, dang_re, che_do_lay_mau)
 
         return loi_an_toan, scan_an_toan
     

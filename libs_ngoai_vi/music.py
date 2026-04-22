@@ -57,7 +57,8 @@ data = {"loi_motor_nang_ha": 0,
         "doi_dau_di_chuyen": 0,
         "dang_den_vi_tri_cho": 0,
         "da_den_dich": 0,
-        "icp_sai_vi_tri": 0}
+        "icp_sai_vi_tri": 0,
+        "coi_o_to": 0}
 
 
 
@@ -67,16 +68,16 @@ thu_tu_uu_tien = [["loi_motor_nang_ha", "icp_sai_vi_tri"],
                   ["bat_dau_di_chuyen"], 
                   ["vung_2"], 
                   ["vung_3"], 
-                  ["dang_ha_hang", "dang_nang_hang", "lui_phai", "lui_trai", "re_phai", "re_trai"], 
+                  ["dang_ha_hang", "dang_nang_hang", "lui_phai", "lui_trai", "re_phai", "re_trai", "coi_o_to"], 
                   ["doi_dau_di_chuyen", "dang_den_vi_tri_cho", "sap_den_dich", "het_pin", "da_den_dich"]]
 
 
 thoi_gian_phat_nhac = {"2": ["lui_phai", "lui_trai"],
                        "3": ["bat_dau_di_chuyen", "doi_dau_di_chuyen"],
-                       "4": ["da_den_dich", "re_phai", "re_trai", "dang_den_vi_tri_cho", "vung_2", "vung_3", "sap_den_dich"],
+                       "4": ["da_den_dich", "re_phai", "re_trai", "dang_den_vi_tri_cho", "vung_2", "vung_3", "sap_den_dich", "coi_o_to"],
                        "5": ["co_vat_can", "dang_ha_hang", "het_pin", "dang_nang_hang", "dung_hoat_dong", "loi_motor_nang_ha", "icp_sai_vi_tri"],
                        "10": ["vung_1"],
-                       "300": ["e_cua_ngay_hom_qua"]}
+                       "300": ["e_cua_ngay_hom_qua", "con_mua_ngang_qua"]}
 # index = 0
 index = random.randint(0, len(thoi_gian_phat_nhac["300"]) - 1)
 name_none = thoi_gian_phat_nhac["300"][index]

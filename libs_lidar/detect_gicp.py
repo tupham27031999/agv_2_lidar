@@ -641,7 +641,7 @@ class FastLidarMapper:
         # --------------------------------------------------
         # 4️⃣ Kiểm tra RMSE (2 mức)
         # --------------------------------------------------
-        if (max(abs(AGVConfig_2.van_toc_phan_hoi_trai), abs(AGVConfig_2.van_toc_phan_hoi_phai)) > 200 and rmse == 0):
+        if (max(abs(AGVConfig.van_toc_phan_hoi_trai), abs(AGVConfig.van_toc_phan_hoi_phai)) > 200 and rmse == 0):
             output = True
             ten_loi = "rmse=0_mac_du_xe_chay"
 
@@ -914,8 +914,8 @@ class FastLidarMapper:
                                 
                     AGVConfig_2.loi_icp, AGVConfig_2.ten_loi = self.check_localization_error_diff_drive(pose_icp = pose_icp,                             # ⚠️ (x_mm, y_mm, theta_rad) - pose từ ICP
                                                                                         pose_icp_prev = pose_icp_prev,                   # ⚠️ pose ICP vòng trước
-                                                                                        v_left_mm_s = AGVConfig_2.van_toc_phan_hoi_trai,         # ⚠️ tốc độ bánh trái (mm/s)
-                                                                                        v_right_mm_s = AGVConfig_2.van_toc_phan_hoi_phai,        # ⚠️ tốc độ bánh phải (mm/s)
+                                                                                        v_left_mm_s = AGVConfig.van_toc_phan_hoi_trai,         # ⚠️ tốc độ bánh trái (mm/s)
+                                                                                        v_right_mm_s = AGVConfig.van_toc_phan_hoi_phai,        # ⚠️ tốc độ bánh phải (mm/s)
                                                                                         wheel_base_mm = AGVConfig_2.wheel_base_mm,               # ⚠️ khoảng cách 2 bánh (mm)
                                                                                         rmse = rmse,                                     # ⚠️ RMSE ICP (mm)
                                                                                         dt = dt,                                         # ⚠️ thời gian vòng lặp (s)

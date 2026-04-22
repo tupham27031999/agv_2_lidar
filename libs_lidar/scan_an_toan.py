@@ -185,7 +185,7 @@ class kiem_tra_vat_can:
         # For now, let's assume it's not part of the main safety check logic.
         pass
 
-    def detect(self, points, direction, di_thuan_nguoc, dang_re, che_do_lay_mau = 0, xac_dinh_vi_tri_xe = 0, di_chuyen_luon = None):
+    def detect(self, points, direction, di_thuan_nguoc, dang_re, che_do_lay_mau = 0):
         """
         Kiểm tra xem có điểm Lidar nào nằm trong vùng an toàn quanh AGV hay không.
 
@@ -209,17 +209,7 @@ class kiem_tra_vat_can:
             tuple: (name, [[x, y, 1]]) nếu có điểm nằm trong vùng ưu tiên cao nhất,
                 hoặc ("", []) nếu không có điểm nào.
         """
-        # if di_thuan_nguoc == 1:
-        #     khoang_cach_tren = khoang_cach_an_toan_tren_xe_nguoc
-        #     khoang_cach_ben_canh = khoang_cach_an_toan_ben_canh_xe_nguoc
-        #     khoang_cach_duoi = khoang_cach_an_toan_duoi_xe_nguoc
-        # else:
-
-        # khoang_cach_tren = khoang_cach_an_toan_tren_xe
-        # khoang_cach_ben_canh = khoang_cach_an_toan_ben_canh_xe
-        # khoang_cach_duoi = khoang_cach_an_toan_duoi_xe
-        delta0 = 0
-        delta1 = 0
+        xac_dinh_vi_tri_xe = 0
         if che_do_lay_mau == 1:
             khoang_cach_tren = self.khoang_cach_an_toan_tren_tools
             khoang_cach_ben_canh = self.khoang_cach_an_toan_ben_canh_tools
@@ -230,12 +220,8 @@ class kiem_tra_vat_can:
                 khoang_cach_ben_canh = self.khoang_cach_an_toan_ben_canh_nang
                 khoang_cach_duoi = self.khoang_cach_an_toan_tren_nang
             else:
-                if len(AGVConfig.vung_loai_bo_x1y1x2y2) == 0:
+                if AGVConfig.xy_lanh_code == "ha":
                     if dang_re == 0:
-                        if di_chuyen_luon is not None and AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["di_chuyen_khong_hang"] != True: # 1
-                            if di_chuyen_luon["delta"] is not None:
-                                delta0 = di_chuyen_luon["delta"][0]
-                                delta1 = di_chuyen_luon["delta"][1]
                         if di_thuan_nguoc == 1:
                             khoang_cach_tren = self.khoang_cach_an_toan_duoi
                             khoang_cach_ben_canh = self.khoang_cach_an_toan_ben_canh
@@ -250,10 +236,6 @@ class kiem_tra_vat_can:
                         khoang_cach_duoi = self.khoang_cach_an_toan_duoi_re
                 else:
                     if dang_re == 0:
-                        if di_chuyen_luon is not None:
-                            if di_chuyen_luon["delta"] is not None and AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["di_chuyen_khong_hang"] != True: # 2
-                                delta0 = di_chuyen_luon["delta"][0]
-                                delta1 = di_chuyen_luon["delta"][1]
                         if di_thuan_nguoc == 1:
                             khoang_cach_tren = self.khoang_cach_an_toan_duoi_xe
                             khoang_cach_ben_canh = self.khoang_cach_an_toan_ben_canh_xe
@@ -269,9 +251,17 @@ class kiem_tra_vat_can:
 
         if len(khoang_cach_tren) < 3 or len(khoang_cach_ben_canh) < 3 or len(khoang_cach_duoi) < 3:
             return "error", []
-
+        if AGVConfig.kc_an_toan_truoc_code is not None:
+            if len(AGVConfig.kc_an_toan_truoc_code) >= 3:
+                khoang_cach_tren = AGVConfig.kc_an_toan_truoc_code
+        if AGVConfig.kc_an_toan_sau_code is not None:
+            if len(AGVConfig.kc_an_toan_sau_code) >= 3:
+                khoang_cach_duoi = AGVConfig.kc_an_toan_sau_code
+        if AGVConfig.kc_an_toan_ben_canh_code is not None:
+            if len(AGVConfig.kc_an_toan_ben_canh_code) >= 3:
+                khoang_cach_ben_canh = AGVConfig.kc_an_toan_ben_canh_code
         zones = {
-            "vung_1": (khoang_cach_tren[0] - delta0, khoang_cach_ben_canh[0] - delta1, khoang_cach_duoi[0]),
+            "vung_1": (khoang_cach_tren[0], khoang_cach_ben_canh[0], khoang_cach_duoi[0]),
             "vung_2": (khoang_cach_tren[1], khoang_cach_ben_canh[1], khoang_cach_duoi[1]),
             "vung_3": (khoang_cach_tren[2], khoang_cach_ben_canh[2], khoang_cach_duoi[2]),
         }

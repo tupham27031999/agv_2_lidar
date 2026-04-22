@@ -3,8 +3,8 @@ import numpy as np
 import time
 import threading
 import controller_motor
-from config import AGVConfig
-from config_2 import AGVConfig_2
+# from config import AGVConfig
+# from config_2 import AGVConfig_2
 import math
 
 
@@ -15,7 +15,6 @@ bause = AGVConfig.driver_motor["baudrate"]
 
 print(com, bause, AGVConfig_2.distance_max)
 van_toc_text = ""
-
 
 
 
@@ -39,7 +38,7 @@ class sent_data_driver:
         self.toa_do_diem_dau = []
         self.toa_do_diem_dich = []
         self.toa_do_hien_tai = []
-        self.toa_do_diem_huong_agv = []
+        self.toa_do_diem_huong = []
         self.toa_do_diem_cong_1 = []
         self.toa_do_diem_cong_2 = []
         self.toa_do_diem_kiem_soat = []
@@ -433,7 +432,6 @@ class sent_data_driver:
         print("--------- tắt kết nối driver motor ---------")
 
     def load_data_sent_drive(self, data):
-
         # v_tien_max,  v_re_max, 
         #                      toa_do_diem_dau, toa_do_diem_dich, toa_do_hien_tai, diem_huong,
         #                      angle, distance, check_angle_distance, 
@@ -442,7 +440,7 @@ class sent_data_driver:
         if data is not None:
             self.v_tien_max = data["v_tien_max"]
             self.v_re_max = data["v_re_max"]
-            # print("self.v_tien_max", self.v_tien_max)
+
             if AGVConfig_2.loi_an_toan == "vung_3":
                 self.v_tien_max = min(self.v_tien_max, AGVConfig_2.van_toc_an_toan["vung_3"]["van_toc_tien"])
                 self.v_re_max = min(self.v_re_max, AGVConfig_2.van_toc_an_toan["vung_3"]["van_toc_re"])
@@ -452,17 +450,27 @@ class sent_data_driver:
             if AGVConfig_2.loi_an_toan == "vung_1":
                 self.v_tien_max = AGVConfig_2.van_toc_an_toan["vung_1"]["van_toc_tien"]
                 self.v_re_max = AGVConfig_2.van_toc_an_toan["vung_1"]["van_toc_re"]
-            # print(self.v_tien_max, " 0000000000000")
+
             self.toa_do_diem_dau = data["toa_do_diem_dau"]
             self.toa_do_diem_dich = data["toa_do_diem_dich"]
-            self.toa_do_diem_huong_agv = data["toa_do_diem_huong_agv"]
+            self.toa_do_diem_huong = data["toa_do_diem_huong"]
+            self.toa_do_diem_cong_1 = data["toa_do_diem_cong_1"]
+            self.toa_do_diem_cong_2 = data["toa_do_diem_cong_2"]
             self.toa_do_diem_kiem_soat = data["toa_do_diem_kiem_soat"]
             self.distance = data["distance"]
             self.angle = data["angle"]
             self.check_angle_distance = data["check_angle_distance"]
             self.stop = data["stop"]
+            self.di_cham = data["di_cham"]
+            self.a_v = data["a_v"]
             self.dang_re = data["dang_re"]
+            self.tien_rl = data["tien_rl"]
             self.di_thuan_nguoc = data["di_thuan_nguoc"]
+            self.xac_dinh_vi_tri_xe = data["xac_dinh_vi_tri_xe"]
+            if data["di_chuyen_luon"] != None:
+                self.di_chuyen_luon = data["di_chuyen_luon"]
+            self.distance_dich_ly_tuong = data["distance_dich_ly_tuong"] # kiểm tra lại sau
+            self.toa_do_dich_ly_tuong = data["toa_do_dich_ly_tuong"]
         else:
             self.stop = 1
 
@@ -470,14 +478,14 @@ class sent_data_driver:
         if self.thiet_lap_ket_noi == True:
             data_fb = self.get_rpm()
             if data_fb[0] > 10000:
-                AGVConfig.van_toc_phan_hoi_trai = - int(data_fb[0] - 65536) * 10
+                AGVConfig_2.van_toc_phan_hoi_trai = - int(data_fb[0] - 65536) * 10
             else:
-                AGVConfig.van_toc_phan_hoi_trai = - int(data_fb[0]) * 10
+                AGVConfig_2.van_toc_phan_hoi_trai = - int(data_fb[0]) * 10
 
             if data_fb[1] > 10000:
-                AGVConfig.van_toc_phan_hoi_phai = int(data_fb[1] - 65536) * 10
+                AGVConfig_2.van_toc_phan_hoi_phai = int(data_fb[1] - 65536) * 10
             else:
-                AGVConfig.van_toc_phan_hoi_phai = int(data_fb[1]) * 10
+                AGVConfig_2.van_toc_phan_hoi_phai = int(data_fb[1]) * 10
 
 
     # dùng cho điều khiển bàn phím
@@ -488,13 +496,13 @@ class sent_data_driver:
 
             data_fb = self.get_rpm()
             if data_fb[0] > 10000:
-                AGVConfig.van_toc_phan_hoi_trai = - int(data_fb[0] - 65536) * 10
+                AGVConfig_2.van_toc_phan_hoi_trai = - int(data_fb[0] - 65536) * 10
             else:
-                AGVConfig.van_toc_phan_hoi_trai = - int(data_fb[0]) * 10
+                AGVConfig_2.van_toc_phan_hoi_trai = - int(data_fb[0]) * 10
             if data_fb[1] > 10000:
-                AGVConfig.van_toc_phan_hoi_phai = int(data_fb[1] - 65536) * 10
+                AGVConfig_2.van_toc_phan_hoi_phai = int(data_fb[1] - 65536) * 10
             else:
-                AGVConfig.van_toc_phan_hoi_phai = int(data_fb[1]) * 10
+                AGVConfig_2.van_toc_phan_hoi_phai = int(data_fb[1]) * 10
         
     def setup_driver_motor(self):
         if self.da_ngat_dong_co == False:
@@ -578,104 +586,114 @@ class sent_data_driver:
             else:
                 # dieu_khien_agv = {"dieu_khien_thu_cong": False, "tien": 0, "lui": 0, "trai": 0, "phai": 0}
                 if AGVConfig.dieu_khien_agv["dieu_khien_thu_cong"] == False:
-                    v_tien_max0,  v_re_max0 = [self.v_tien_max, self.v_re_max]
-                    # if AGVConfig.run_state == 1:
-                    #     print(f"v_tien_max0: {v_tien_max0}, v_re_max: {v_re_max0}")
-                    toa_do_diem_dau, toa_do_diem_dich, toa_do_diem_huong_agv = [self.toa_do_diem_dau, self.toa_do_diem_dich, self.toa_do_diem_huong_agv]
-                    # if AGVConfig.run_state == 1:
-                    #     print(f"toa_do_diem_dau: {toa_do_diem_dau}, toa_do_diem_dich: {toa_do_diem_dich}, toa_do_diem_huong_agv: {toa_do_diem_huong_agv}")
-                    toa_do_diem_kiem_soat = self.toa_do_diem_kiem_soat
-                    # if AGVConfig.run_state == 1:
-                    #     print(f"toa_do_diem_kiem_soat: {toa_do_diem_kiem_soat}")
+                    v_tien_max0,  v_re_max = [self.v_tien_max, self.v_re_max]
+                    if AGVConfig.run_state == 1:
+                        print(f"v_tien_max0: {v_tien_max0}, v_re_max: {v_re_max}")
+                    toa_do_diem_dau, toa_do_diem_dich, toa_do_diem_huong = [self.toa_do_diem_dau, self.toa_do_diem_dich, self.toa_do_diem_huong]
+                    if AGVConfig.run_state == 1:
+                        print(f"toa_do_diem_dau: {toa_do_diem_dau}, toa_do_diem_dich: {toa_do_diem_dich}, toa_do_diem_huong: {toa_do_diem_huong}")
+                    toa_do_diem_cong_1, toa_do_diem_cong_2, toa_do_diem_kiem_soat = [self.toa_do_diem_cong_1, self.toa_do_diem_cong_2, self.toa_do_diem_kiem_soat]
+                    if AGVConfig.run_state == 1:
+                        print(f"toa_do_diem_cong_1: {toa_do_diem_cong_1}, toa_do_diem_cong_2: {toa_do_diem_cong_2}, toa_do_diem_kiem_soat: {toa_do_diem_kiem_soat}")
                     angle, distance, check_angle_distance = [self.angle, self.distance, self.check_angle_distance]
-                    # if AGVConfig.run_state == 1:
-                    #     print(f"angle: {angle}, distance: {distance}, check_angle_distance: {check_angle_distance}")
-                    stop, dang_re = [self.stop, self.dang_re]
-                    # if AGVConfig.run_state == 1:
-                    #     print(f"stop: {stop}, dang_re: {dang_re}")
-                    di_thuan_nguoc = self.di_thuan_nguoc
-                    # if AGVConfig.run_state == 1:
-                    #     print(f"di_thuan_nguoc: {di_thuan_nguoc}")
+                    if AGVConfig.run_state == 1:
+                        print(f"angle: {angle}, distance: {distance}, check_angle_distance: {check_angle_distance}")
+                    stop, di_cham, a_v, dang_re, tien_rl = [self.stop, self.di_cham, self.a_v, self.dang_re, self.tien_rl]
+                    # print(f"stop: {stop}, di_cham: {di_cham}, a_v: {a_v}, dang_re: {dang_re}, tien_rl: {tien_rl}")
+                    di_thuan_nguoc, xac_dinh_vi_tri_xe, di_chuyen_luon = [self.di_thuan_nguoc, self.xac_dinh_vi_tri_xe, self.di_chuyen_luon]
+                    # print(f"di_thuan_nguoc: {di_thuan_nguoc}, xac_dinh_vi_tri_xe: {xac_dinh_vi_tri_xe}, di_chuyen_luon: {di_chuyen_luon}")
+                    distance_dich_ly_tuong, toa_do_dich_ly_tuong = [self.distance_dich_ly_tuong, self.toa_do_dich_ly_tuong]
+                    if AGVConfig.run_state == 1:
+                        print(f"distance_dich_ly_tuong: {distance_dich_ly_tuong}, toa_do_dich_ly_tuong: {toa_do_dich_ly_tuong}")
                     toa_do_hien_tai = AGVConfig.toa_do_agv_mm
-                    # if AGVConfig.run_state == 1:
-                    #     print(f"toa_do_hien_tai: {toa_do_hien_tai}")
+                    # print(f"toa_do_hien_tai: {toa_do_hien_tai}")
 
 
                     # set vận tốc gửi ban đầu = 0
                     van_toc_gui_driver_phai = 0
                     van_toc_gui_driver_trai = 0
-                    v_max_trai_phai = max(abs(AGVConfig.van_toc_phan_hoi_trai), abs(AGVConfig.van_toc_phan_hoi_phai))
                     
-
-
-                    # giảm tốc độ hoặc tăng tốc
+                    # nếu là các điểm đích ở lấy trả hàng, xoay vuông góc, song song
+                    if xac_dinh_vi_tri_xe == 1:
+                        v_tien_max0 = min(v_tien_max0, 1000)
+                    if di_cham != 0:
+                        v_tien_max0 = 3000
+                    if v_tien_max0 == 0:
+                        stop = 1
                     v_tien_max = v_tien_max0
-                    van_toc_min = min(1800, v_tien_max0)
-                    gia_toc_tien = 1300
-                    if distance != 0:
-                        # giảm tốc
-                        if distance <= AGVConfig_2.distance_max:
-                            ty_le_distance = AGVConfig_2.distance_max/distance
-                            v_tien_max = int(v_tien_max0 / ty_le_distance)
-                            if v_tien_max < van_toc_min:
-                                v_tien_max = van_toc_min
-                            
-                            if v_tien_max > v_max_trai_phai + gia_toc_tien:
-                                v_tien_max = v_max_trai_phai + gia_toc_tien
-                        else:
-                            # tăng tốc
-                            v_tien_max = min((v_max_trai_phai + gia_toc_tien), v_tien_max0)
-
-
-                    else:
-                        v_tien_max = 0
                     
-                    
-                    v_re_max = v_re_max0
+                
+                    v_re = v_re_max 
                     min_angle = 500
-                    gia_toc_re = 700
-                    # tăng hoặc giảm tốc độ góc
+                    # giảm khi góc bé
                     if abs(angle) <= 10:
                         min_angle = 300
-                    if abs(angle) <= 30:
-                        # giảm tốc
-                        v_re_1 = max((v_max_trai_phai - gia_toc_re), min_angle)
-                        # v_re_2 = v_re_1
-                        # if abs(angle) < 20:
-                        v_re_2 = max((v_re_max * (abs(angle) / 30)), min_angle)
-                        v_re_max = min(v_re_1, v_re_2)
-                    else:
-                        # tăng tốc
-                        v_re_max = min((v_max_trai_phai + gia_toc_re), v_re_max0)
-                    # if AGVConfig.run_state == 1:
-                    #     print("mmmmmmm", v_tien_max, v_re_max, v_max_trai_phai, AGVConfig.van_toc_phan_hoi_trai, AGVConfig.van_toc_phan_hoi_phai)
+                    if abs(angle) <= 20:
+                        v_re = v_re * (abs(angle) / 20)
+                    if v_re < min(min_angle, v_re_max):
+                        v_re = min(min_angle, v_re_max) 
+                    v_re_max = min(v_re_max, v_re)
+                    if v_re_max < 300:
+                        v_re_max = 300
+                    
                     
                     if stop == 0:
                         if check_angle_distance == "distance" and dang_re == 0 and self.quay_trai == 0 and self.quay_phai == 0:
+                            ty_le_distance = 1
+                            van_toc_min = min(1800, v_tien_max)
+                            # giảm vận tốc max khi gần đến đích
+                            if distance_dich_ly_tuong is not None:
+                                if di_chuyen_luon["update"] == 1 and di_chuyen_luon["van_toc_min"] is not None and distance_dich_ly_tuong < 100:
+                                    v_tien_max = min(v_tien_max, di_chuyen_luon["van_toc_min"])
+                                elif distance_dich_ly_tuong <= AGVConfig_2.distance_max and distance_dich_ly_tuong != 0:
+                                    ty_le_distance = AGVConfig_2.distance_max/distance_dich_ly_tuong
+                                    v_tien = int(v_tien_max / ty_le_distance)
+                                    v_tien_max = int(v_tien)
+
+                                    if v_tien_max < van_toc_min:
+                                        v_tien_max = van_toc_min
+                                else:
+                                    tang_toc = 1700
+                                    v_max_trai_phai = max(abs(AGVConfig_2.van_toc_phan_hoi_trai), abs(AGVConfig_2.van_toc_phan_hoi_phai))
+                                    if v_tien_max > v_max_trai_phai + tang_toc:
+                                        v_tien_max = v_max_trai_phai + tang_toc
+                                    if v_tien_max < van_toc_min:
+                                        v_tien_max = van_toc_min
+                            else:
+                                v_max_trai_phai = max(abs(AGVConfig_2.van_toc_phan_hoi_trai), abs(AGVConfig_2.van_toc_phan_hoi_phai))
+                                if v_tien_max > v_max_trai_phai + tang_toc:
+                                    v_tien_max = v_max_trai_phai + tang_toc
+                                if v_tien_max < van_toc_min:
+                                    v_tien_max = van_toc_min
+
                             khoang_cach_hai_banh = AGVConfig_2.wheel_base_mm
                             v_min = min(1800, max((v_tien_max-500), 500))
-                            di_chuyen_cung = False
                             # di chuyển hình cung
-                            if len(toa_do_diem_kiem_soat) != 0:
-                                v_min = 0
-                                di_chuyen_cung = True
+                            if di_chuyen_luon is not None:
+                                if di_chuyen_luon["update"] == 1 and di_chuyen_luon["van_toc_di_chuyen_luon"] is not None:
+                                    v_tien_max = di_chuyen_luon["van_toc_di_chuyen_luon"]
+                                    v_min = 0
+                            if len(toa_do_diem_cong_1) != 0 and len(toa_do_diem_cong_2) != 0:
+                                toa_do_diem_dau = toa_do_diem_cong_1
+                                toa_do_dich_ly_tuong = toa_do_diem_cong_2
+
                             if di_thuan_nguoc == 0:
                                 van_toc_gui_driver_phai, van_toc_gui_driver_trai = controller_motor.agv_bam_duong(x=toa_do_hien_tai[0], y=toa_do_hien_tai[1], 
-                                                                                    toa_do_diem_huong_agv = toa_do_diem_huong_agv,
+                                                                                    toa_do_diem_huong = toa_do_diem_huong,
                                                                                     x0 = toa_do_diem_dau[0], y0 = toa_do_diem_dau[1],
-                                                                                    xg = toa_do_diem_dich[0], yg = toa_do_diem_dich[1],
+                                                                                    xg = toa_do_dich_ly_tuong[0], yg = toa_do_dich_ly_tuong[1],
                                                                                     wheel_base = khoang_cach_hai_banh,
                                                                                     v_max = v_tien_max, v_min = v_min,
-                                                                                    di_chuyen_cung = di_chuyen_cung
+                                                                                    di_chuyen_luon = di_chuyen_luon
                                                                                     )
                             else:
                                 van_toc_gui_driver_trai, van_toc_gui_driver_phai = controller_motor.agv_bam_duong(x=toa_do_hien_tai[0], y=toa_do_hien_tai[1], 
-                                                                                    toa_do_diem_huong_agv = toa_do_diem_huong_agv,
+                                                                                    toa_do_diem_huong = toa_do_diem_huong,
                                                                                     x0 = toa_do_diem_dau[0], y0 = toa_do_diem_dau[1],
-                                                                                    xg = toa_do_diem_dich[0], yg = toa_do_diem_dich[1],
+                                                                                    xg = toa_do_dich_ly_tuong[0], yg = toa_do_dich_ly_tuong[1],
                                                                                     wheel_base = khoang_cach_hai_banh,
                                                                                     v_max = v_tien_max, v_min = v_min,
-                                                                                    di_chuyen_cung = di_chuyen_cung
+                                                                                    di_chuyen_luon = di_chuyen_luon
                                                                                     )
                             # print("---- van_toc_gui_driver_trai  @@@@@----", van_toc_gui_driver_trai, van_toc_gui_driver_phai)
                         else:
@@ -695,7 +713,7 @@ class sent_data_driver:
                                 self.quay_phai = 0
 
                         # reset rẽ với trường hợp đặc biệt
-                        if len(toa_do_diem_kiem_soat) != 0:
+                        if di_chuyen_luon["update"] == 1 and di_chuyen_luon["van_toc_di_chuyen_luon"] is not None:
                             self.quay_trai = 0
                             self.quay_phai = 0
                         else:
@@ -720,20 +738,20 @@ class sent_data_driver:
                             van_toc_gui_driver_phai = - van_toc_gui_driver_phai
                             van_toc_gui_driver_trai = - van_toc_gui_driver_trai 
 
-                        # # thực hiện quay chậm, tránh thay đổi tốc độ đột ngột
-                        # if van_toc_gui_driver_trai == - van_toc_gui_driver_phai:
-                        #     delta_re = 200
-                        #     if abs(AGVConfig_2.van_toc_phan_hoi_trai) > delta_re or abs(AGVConfig_2.van_toc_phan_hoi_phai) > delta_re:
-                        #         if (abs(AGVConfig_2.van_toc_phan_hoi_trai + van_toc_gui_driver_trai) > (abs(van_toc_gui_driver_trai) + delta_re) or 
-                        #                                     abs(AGVConfig_2.van_toc_phan_hoi_phai + van_toc_gui_driver_phai) > abs(van_toc_gui_driver_phai + delta_re)):
-                        #             van_toc_gui_driver_trai = 0
-                        #             van_toc_gui_driver_phai = 0
-                        # else: # thực hiện so sánh đầu vào và đầu ra của vận tốc tránh thay đổi đột ngột với trường hợp tiến lùi
-                        #     van_toc_gui_driver_trai, van_toc_gui_driver_phai = self.tinh_van_toc_dong_bo(van_toc_gui_driver_trai, 
-                        #                                                                                  van_toc_gui_driver_phai, 
-                        #                                                                                  AGVConfig_2.van_toc_phan_hoi_trai, 
-                        #                                                                                  AGVConfig_2.van_toc_phan_hoi_phai, 
-                        #                                                                                  gia_toc_max=1000)
+                        # thực hiện quay chậm, tránh thay đổi tốc độ đột ngột
+                        if van_toc_gui_driver_trai == - van_toc_gui_driver_phai:
+                            delta_re = 200
+                            if abs(AGVConfig_2.van_toc_phan_hoi_trai) > delta_re or abs(AGVConfig_2.van_toc_phan_hoi_phai) > delta_re:
+                                if (abs(AGVConfig_2.van_toc_phan_hoi_trai + van_toc_gui_driver_trai) > (abs(van_toc_gui_driver_trai) + delta_re) or 
+                                                            abs(AGVConfig_2.van_toc_phan_hoi_phai + van_toc_gui_driver_phai) > abs(van_toc_gui_driver_phai + delta_re)):
+                                    van_toc_gui_driver_trai = 0
+                                    van_toc_gui_driver_phai = 0
+                        else: # thực hiện so sánh đầu vào và đầu ra của vận tốc tránh thay đổi đột ngột với trường hợp tiến lùi
+                            van_toc_gui_driver_trai, van_toc_gui_driver_phai = self.tinh_van_toc_dong_bo(van_toc_gui_driver_trai, 
+                                                                                                         van_toc_gui_driver_phai, 
+                                                                                                         AGVConfig_2.van_toc_phan_hoi_trai, 
+                                                                                                         AGVConfig_2.van_toc_phan_hoi_phai, 
+                                                                                                         gia_toc_max=1000)
                             
                         # self.set_rpm(int(van_toc_gui_driver_trai), int(van_toc_gui_driver_phai))
                         # reset rẽ
@@ -741,7 +759,7 @@ class sent_data_driver:
                             self.quay_phai = 0
                             self.quay_trai = 0     
                     else:
-                        if AGVConfig.van_toc_phan_hoi_trai != 0 or AGVConfig.van_toc_phan_hoi_phai != 0:
+                        if AGVConfig_2.van_toc_phan_hoi_trai != 0 or AGVConfig_2.van_toc_phan_hoi_phai != 0:
                             self.set_rpm(0, 0)
                             print("stop_agv -- agv")
                         
@@ -753,21 +771,21 @@ class sent_data_driver:
                     if self.van_toc_gui_driver_trai == 0 and self.van_toc_gui_driver_phai == 0:
                         if self.time_stop_dk_tay == 0:
                             self.time_stop_dk_tay = time.time()
-                            van_toc_gui_driver_trai = int(AGVConfig.van_toc_phan_hoi_trai)
-                            van_toc_gui_driver_phai = int(AGVConfig.van_toc_phan_hoi_phai)
+                            van_toc_gui_driver_trai = int(AGVConfig_2.van_toc_phan_hoi_trai)
+                            van_toc_gui_driver_phai = int(AGVConfig_2.van_toc_phan_hoi_phai)
                         else:
                             ty_le = (time.time() - self.time_stop_dk_tay)/0.7
                             if ty_le >= 1:
                                 van_toc_gui_driver_trai = 0
                                 van_toc_gui_driver_phai = 0
                             else:
-                                van_toc_gui_driver_trai = int(AGVConfig.van_toc_phan_hoi_trai * (1 - ty_le))
-                                van_toc_gui_driver_phai = int(AGVConfig.van_toc_phan_hoi_phai * (1 - ty_le)) 
+                                van_toc_gui_driver_trai = int(AGVConfig_2.van_toc_phan_hoi_trai * (1 - ty_le))
+                                van_toc_gui_driver_phai = int(AGVConfig_2.van_toc_phan_hoi_phai * (1 - ty_le)) 
                     else:
                         self.time_stop_dk_tay = 0
 
-                        delta_v_trai = abs(self.van_toc_gui_driver_trai - AGVConfig.van_toc_phan_hoi_trai)
-                        delta_v_phai = abs(self.van_toc_gui_driver_phai - AGVConfig.van_toc_phan_hoi_phai)
+                        delta_v_trai = abs(self.van_toc_gui_driver_trai - AGVConfig_2.van_toc_phan_hoi_trai)
+                        delta_v_phai = abs(self.van_toc_gui_driver_phai - AGVConfig_2.van_toc_phan_hoi_phai)
 
                         k = self.van_toc_gui_driver_trai * self.van_toc_gui_driver_phai
 
@@ -779,14 +797,14 @@ class sent_data_driver:
                                 ty_le_van_toc = self.van_toc_gui_driver_trai/self.van_toc_gui_driver_phai
 
                                 if delta_v_trai > 1000:
-                                    if AGVConfig.van_toc_phan_hoi_trai < self.van_toc_gui_driver_trai:
-                                        if AGVConfig.van_toc_phan_hoi_trai + 1000 < self.van_toc_gui_driver_trai: # vận tốc hiện tại + 1000 vẫn nhỏ hơn vận tốc gửi đến
-                                            van_toc_gui_driver_trai = AGVConfig.van_toc_phan_hoi_trai + 1000
+                                    if AGVConfig_2.van_toc_phan_hoi_trai < self.van_toc_gui_driver_trai:
+                                        if AGVConfig_2.van_toc_phan_hoi_trai + 1000 < self.van_toc_gui_driver_trai: # vận tốc hiện tại + 1000 vẫn nhỏ hơn vận tốc gửi đến
+                                            van_toc_gui_driver_trai = AGVConfig_2.van_toc_phan_hoi_trai + 1000
                                         else:
                                             van_toc_gui_driver_trai = self.van_toc_gui_driver_trai
                                     else:
-                                        if AGVConfig.van_toc_phan_hoi_trai - 1000 > self.van_toc_gui_driver_trai: # vận tốc hiện tại - 1000 vẫn lớn hơn vận tốc gửi đến
-                                            van_toc_gui_driver_trai = AGVConfig.van_toc_phan_hoi_trai - 1000
+                                        if AGVConfig_2.van_toc_phan_hoi_trai - 1000 > self.van_toc_gui_driver_trai: # vận tốc hiện tại - 1000 vẫn lớn hơn vận tốc gửi đến
+                                            van_toc_gui_driver_trai = AGVConfig_2.van_toc_phan_hoi_trai - 1000
                                         else:
                                             van_toc_gui_driver_trai = self.van_toc_gui_driver_trai
 
@@ -794,14 +812,14 @@ class sent_data_driver:
                                     van_toc_gui_driver_trai = self.van_toc_gui_driver_trai
 
                                 if delta_v_phai > 1000:
-                                    if AGVConfig.van_toc_phan_hoi_phai < self.van_toc_gui_driver_phai:
-                                        if AGVConfig.van_toc_phan_hoi_phai + 1000 < self.van_toc_gui_driver_phai: # vận tốc hiện tại + 1000 vẫn nhỏ hơn vận tốc gửi đến
-                                            van_toc_gui_driver_phai = AGVConfig.van_toc_phan_hoi_phai + 1000
+                                    if AGVConfig_2.van_toc_phan_hoi_phai < self.van_toc_gui_driver_phai:
+                                        if AGVConfig_2.van_toc_phan_hoi_phai + 1000 < self.van_toc_gui_driver_phai: # vận tốc hiện tại + 1000 vẫn nhỏ hơn vận tốc gửi đến
+                                            van_toc_gui_driver_phai = AGVConfig_2.van_toc_phan_hoi_phai + 1000
                                         else:
                                             van_toc_gui_driver_phai = self.van_toc_gui_driver_phai
                                     else:
-                                        if AGVConfig.van_toc_phan_hoi_phai - 1000 > self.van_toc_gui_driver_phai: # vận tốc hiện tại - 1000 vẫn lớn hơn vận tốc gửi đến
-                                            van_toc_gui_driver_phai = AGVConfig.van_toc_phan_hoi_phai - 1000
+                                        if AGVConfig_2.van_toc_phan_hoi_phai - 1000 > self.van_toc_gui_driver_phai: # vận tốc hiện tại - 1000 vẫn lớn hơn vận tốc gửi đến
+                                            van_toc_gui_driver_phai = AGVConfig_2.van_toc_phan_hoi_phai - 1000
                                         else:
                                             van_toc_gui_driver_phai = self.van_toc_gui_driver_phai
                                 else:

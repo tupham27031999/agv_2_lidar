@@ -218,8 +218,6 @@ class AGVConfig_2:
     # vùng thay đổi cho conect_driver.py
     last_icp_time = 0       # ⚠️ timestamp ICP update cuối
     now_time = 0            # timestamp hiện tại
-    van_toc_phan_hoi_trai = 0
-    van_toc_phan_hoi_phai = 0
     di_chuyen_cham = False
     loi_icp = False
     ten_loi = ""

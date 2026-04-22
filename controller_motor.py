@@ -16,13 +16,13 @@ def wrap_angle(a):
 # ================== HÀM ĐIỀU KHIỂN CHÍNH ==================
 def agv_bam_duong(
     x, y,                     # vị trí AGV (mm)
-    toa_do_diem_huong,               # điểm hướng [xh, yh] (mm)
-    x0, y0,                   # điểm đầu đường (mm)
-    xg, yg,                   # điểm đích (mm)
+    toa_do_diem_huong_agv,        # điểm hướng [xh, yh] (mm) hướng của agv
+    x0, y0,                   # điểm đầu (mm) (điểm đích)
+    xg, yg,                   # điểm đích (mm)      (điểm hướng của điểm đích)
     wheel_base,               # khoảng cách 2 bánh (mm)
     v_max=5000,               # mm/s
     v_min=300,                 # mm/s,
-    di_chuyen_luon = None
+    di_chuyen_cung = False
 ):
     """
     AGV bám đường thẳng từ (x0,y0) -> (xg,yg)
@@ -40,7 +40,7 @@ def agv_bam_duong(
     #     else:
     #         if distance_hien_tai_dau < 500:
     #             v_max = 4000
-    xh, yh = toa_do_diem_huong
+    xh, yh = toa_do_diem_huong_agv
 
     # vi_tri_hien_tai = [x, y]
     # diem_dau = [x0, y0]
@@ -87,29 +87,26 @@ def agv_bam_duong(
     k_yaw = 5.0
     k_ct = 20.0
     omega_max = 10.0
-    if di_chuyen_luon is not None:
-        if di_chuyen_luon["update"] == 1 and di_chuyen_luon["van_toc_di_chuyen_luon"] is not None:
-            
-            k_ct = max((int(abs(e_yaw *180 / math.pi)) * 4), 60) # bám ngang
-            k_yaw = max(10.0, 80 - k_ct) # độ bám hướng
-            # k_ct = 100
-            # k_yaw = 5
-            omega_max = 200.0 # AGV được phép quay nhanh tối đa bao nhiêu 2 độ/s
-            edit_v = max((2000 + (30 - int(abs(e_yaw *180 / math.pi))) * 100), 2000)
-            v_max = min(di_chuyen_luon["van_toc_di_chuyen_luon"], edit_v)
-            # v_max = di_chuyen_luon["van_toc_di_chuyen_luon"]
-            v = v_max
-        else:
-            if dist_to_goal <= 400:
-                # gần đích → khóa hướng song song
-                k_yaw = 4.0
-                k_ct = 0.5
-                omega_max = 0.4
-    else:
-        # gần đích → khóa hướng song song
-        k_yaw = 4.0
-        k_ct = 0.5
-        omega_max = 0.4
+    if di_chuyen_cung == True:
+        k_ct = max((int(abs(e_yaw *180 / math.pi)) * 4), 60) # bám ngang
+        k_yaw = max(10.0, 80 - k_ct) # độ bám hướng
+        # k_ct = 100
+        # k_yaw = 5
+        omega_max = 200.0 # AGV được phép quay nhanh tối đa bao nhiêu 2 độ/s
+        edit_v = max((2000 + (30 - int(abs(e_yaw *180 / math.pi))) * 100), 2000)
+        v_max = min(v_max, edit_v)
+        v = v_max
+    # else:
+    #     if dist_to_goal <= 400:
+    #         # gần đích → khóa hướng song song
+    #         k_yaw = 4.0
+    #         k_ct = 0.5
+    #         omega_max = 0.4
+    #     else:
+    #         # gần đích → khóa hướng song song
+    #         k_yaw = 4.0
+    #         k_ct = 0.5
+    #         omega_max = 0.4
 
     # ================== 7. Stanley cải tiến ==================
     if AGVConfig.run_state == 1:
@@ -194,7 +191,7 @@ if __name__ == "__main__":
     toa_do_diem_dau = [-16533, -991]
     toa_do_diem_dich = [-16517.65, -963.8930625]
     toa_do_hien_tai = [-16531, -990]
-    toa_do_diem_huong = [-15405, 662]
+    toa_do_diem_huong_agv = [-15405, 662]
 
 #     def agv_bam_duong(
 #     x, y,                     # vị trí AGV (mm)
@@ -208,7 +205,7 @@ if __name__ == "__main__":
 # )
 
     print(agv_bam_duong(x = toa_do_hien_tai[0], y = toa_do_hien_tai[1],
-                        toa_do_diem_huong= toa_do_diem_huong,
+                        toa_do_diem_huong_agv= toa_do_diem_huong_agv,
                         x0 = toa_do_diem_dau[0], y0 = toa_do_diem_dau[1],
                         xg = toa_do_diem_dich[0], yg = toa_do_diem_dich[1],
                         wheel_base = 500, v_max = 400, v_min = 300))

@@ -24,8 +24,8 @@ import os
 from libs_ngoai_vi import music
 from ham_logic import tinh_luong_giac, tam_va_goc_hcn, angle_and_distance as ad
 import config as cfg
-from config import AGVConfig
-from config_2 import AGVConfig_2
+# from config import AGVConfig
+# from config_2 import AGVConfig_2
 from libs_file import edit_csv_phay, edit_csv_tab, remove
 
 

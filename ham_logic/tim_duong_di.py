@@ -171,7 +171,9 @@ def toi_uu_hoa_duong_di(path, nguong_goc=5):
     """
     # list_loai_2 = loc_diem_theo_ky_tu_dau(cfg.data_di_chuyen_luon["loai_2"]["danh_sach_diem_dich"][0], webserver.danh_sach_diem)
     list_loai_2 = []
-    list_loai_3 = loc_diem_theo_ky_tu_dau(AGVConfig_2.data_di_chuyen_luon["loai_3"]["danh_sach_diem_dich"][0], AGVConfig.danh_sach_diem)
+    # list_loai_3 = loc_diem_theo_ky_tu_dau(AGVConfig_2.data_di_chuyen_luon["loai_3"]["danh_sach_diem_dich"][0], AGVConfig.danh_sach_diem)
+    list_loai_3 = ["G12", "G13", "G14", "G15"]
+
     danh_sach_diem_dac_biet = set(list_loai_2 + list_loai_3)
 
     if not path:
@@ -394,7 +396,8 @@ def a_star(start, goal, vat_can_diem=None, vat_can_duong=None):
     cost_diff = float('inf')
     if cost_ideal != float('inf') and cost_actual != float('inf'):
         cost_diff = cost_actual - cost_ideal
-
+    if path_actual == None:
+        path_actual = []
     return path_ideal, cost_ideal, path_actual, cost_actual, cost_diff
 
 
