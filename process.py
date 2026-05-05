@@ -66,7 +66,7 @@ class xu_ly_du_lieu_lidar:
                                                                                         self.lidar1_orient_deg, self.lidar2_orient_deg, 
                                                                                         AGVConfig.chieu_ngang_xe, AGVConfig.chieu_doc_xe)
 
-        if AGVConfig.dieu_khien_agv["dieu_khien_thu_cong"] == False:
+        if AGVConfig.dieu_khien_thu_cong["dieu_khien_thu_cong"] == False:
             AGVConfig_2.loi_an_toan, scan_an_toan = self.kiem_tra_an_toan_lidar(scan_xy, huong_agv_toa_do_xyz)
         else:
             AGVConfig_2.loi_an_toan = ""
@@ -170,10 +170,11 @@ class xu_ly_du_lieu_lidar:
                 AGVConfig.huong_agv_do_thuc_rad = goc_agv_rad
                 AGVConfig.toa_do_agv_mm = [tam_x_mm, tam_y_mm]
                 AGVConfig.toa_do_agv_pixel = [tam_x_pixel, tam_y_pixel]
-                AGVConfig.huong_agv_do_img = (np.pi/2 - goc_agv_rad) * 180 / np.pi # dùng để hiển thị góc agv trên web
-                goc_agv_driver_control = goc_agv_rad - np.pi/2 # chuyển góc về hệ tọa độ của driver_control_input
+                AGVConfig.huong_agv_do_img = ad.normalize_angle_360(int((np.pi/2 - goc_agv_rad) * 180 / np.pi)) # dùng để hiển thị góc agv trên web
+                goc_agv_driver_control = goc_agv_rad - np.pi/2 # chuyển góc về hệ tọa độ của driver_control_input tọa độ ảnh
                 goc_agv_driver_control = ad.normalize_rad(goc_agv_driver_control) # Chuẩn hóa một góc về khoảng [-180, 180] độ.
 
+                
                 # print(f"AGVConfig.huong_agv_do_thuc_rad: {AGVConfig.huong_agv_do_thuc_rad}, \
                 #       AGVConfig.toa_do_agv_mm: {AGVConfig.toa_do_agv_mm}, \
                 #       AGVConfig.toa_do_agv_pixel: {AGVConfig.toa_do_agv_pixel}, AGVConfig.huong_agv_do_img: {AGVConfig.huong_agv_do_img}")
@@ -197,30 +198,30 @@ class xu_ly_du_lieu_lidar:
 
     def dk_ban_phim(self):
         van_toc_max_tien = AGVConfig.van_toc_tien_max
-        if AGVConfig.dieu_khien_agv["dieu_khien_thu_cong"] == True:
+        if AGVConfig.dieu_khien_thu_cong["dieu_khien_thu_cong"] == True:
             # dieu_khien_agv = {"dieu_khien_thu_cong": False, "tien": 0, "lui": 0, "trai": 0, "phai": 0}
             # stop nếu tất cả == 0
             # print(AGVConfig.dieu_khien_agv)
-            if AGVConfig.dieu_khien_agv["tien"] == 1 and AGVConfig.dieu_khien_agv["trai"] == 0 and AGVConfig.dieu_khien_agv["phai"] == 0 and AGVConfig.dieu_khien_agv["lui"] == 0: # tiến
+            if AGVConfig.dieu_khien_thu_cong["tien"] == 1 and AGVConfig.dieu_khien_thu_cong["trai"] == 0 and AGVConfig.dieu_khien_thu_cong["phai"] == 0 and AGVConfig.dieu_khien_thu_cong["lui"] == 0: # tiến
                 self.driver_motor.sent_data_controller(vt_trai = van_toc_max_tien, vt_phai = van_toc_max_tien)
                 pass
-            elif AGVConfig.dieu_khien_agv["trai"] == 1 and AGVConfig.dieu_khien_agv["tien"] == 0 and AGVConfig.dieu_khien_agv["lui"] == 0: # rẽ trái
+            elif AGVConfig.dieu_khien_thu_cong["trai"] == 1 and AGVConfig.dieu_khien_thu_cong["tien"] == 0 and AGVConfig.dieu_khien_thu_cong["lui"] == 0: # rẽ trái
                 self.driver_motor.sent_data_controller(vt_trai = -int(van_toc_max_tien/6), vt_phai = int(van_toc_max_tien/6))
                 # print(-int(van_toc_max_tien/6), int(van_toc_max_tien/6))
-            elif AGVConfig.dieu_khien_agv["phai"] == 1 and AGVConfig.dieu_khien_agv["tien"] == 0 and AGVConfig.dieu_khien_agv["lui"] == 0: # rẽ phải
+            elif AGVConfig.dieu_khien_thu_cong["phai"] == 1 and AGVConfig.dieu_khien_thu_cong["tien"] == 0 and AGVConfig.dieu_khien_thu_cong["lui"] == 0: # rẽ phải
                 self.driver_motor.sent_data_controller(vt_trai = int(van_toc_max_tien/6), vt_phai = -int(van_toc_max_tien/6))
-            elif AGVConfig.dieu_khien_agv["trai"] == 1 and AGVConfig.dieu_khien_agv["tien"] == 1 and AGVConfig.dieu_khien_agv["lui"] == 0: # dịch trái
+            elif AGVConfig.dieu_khien_thu_cong["trai"] == 1 and AGVConfig.dieu_khien_thu_cong["tien"] == 1 and AGVConfig.dieu_khien_thu_cong["lui"] == 0: # dịch trái
                 self.driver_motor.sent_data_controller(vt_trai = int((van_toc_max_tien/4)*3), vt_phai = van_toc_max_tien)
                 # print("dich_trai")
-            elif AGVConfig.dieu_khien_agv["phai"] == 1 and AGVConfig.dieu_khien_agv["tien"] == 1 and AGVConfig.dieu_khien_agv["lui"] == 0: # dịch phải
+            elif AGVConfig.dieu_khien_thu_cong["phai"] == 1 and AGVConfig.dieu_khien_thu_cong["tien"] == 1 and AGVConfig.dieu_khien_thu_cong["lui"] == 0: # dịch phải
                 self.driver_motor.sent_data_controller(vt_trai = van_toc_max_tien, vt_phai = int((van_toc_max_tien/4)*3))
                 # print("dich_phai")
 
-            elif AGVConfig.dieu_khien_agv["lui"] == 1 and AGVConfig.dieu_khien_agv["trai"] == 0 and AGVConfig.dieu_khien_agv["phai"] == 0:
+            elif AGVConfig.dieu_khien_thu_cong["lui"] == 1 and AGVConfig.dieu_khien_thu_cong["trai"] == 0 and AGVConfig.dieu_khien_thu_cong["phai"] == 0:
                 self.driver_motor.sent_data_controller(vt_trai = -van_toc_max_tien, vt_phai = -van_toc_max_tien)
-            elif AGVConfig.dieu_khien_agv["trai"] == 1 and AGVConfig.dieu_khien_agv["lui"] == 1: # lùi dịch trái
+            elif AGVConfig.dieu_khien_thu_cong["trai"] == 1 and AGVConfig.dieu_khien_thu_cong["lui"] == 1: # lùi dịch trái
                 self.driver_motor.sent_data_controller(vt_trai = -van_toc_max_tien, vt_phai =-int((van_toc_max_tien/4)*3))
-            elif AGVConfig.dieu_khien_agv["phai"] == 1 and AGVConfig.dieu_khien_agv["lui"] == 1: # lùi dịch phải
+            elif AGVConfig.dieu_khien_thu_cong["phai"] == 1 and AGVConfig.dieu_khien_thu_cong["lui"] == 1: # lùi dịch phải
                 self.driver_motor.sent_data_controller(vt_trai =  -int((van_toc_max_tien/4)*3), vt_phai = -int(van_toc_max_tien))
             else:
                 self.driver_motor.sent_data_controller(vt_trai = 0, vt_phai = 0)

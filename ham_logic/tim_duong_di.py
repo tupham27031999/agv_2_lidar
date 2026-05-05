@@ -785,7 +785,7 @@ def get_quadratic_bezier_tangent(t, p0, p1, p2):
     angle = math.atan2(vy, vx)
     return angle
 
-def calculate_agv_guidance(toa_do_agv, huong_agv_rad, p0, p1, p2, tam_nhin=1.0, sai_so_dich=0.1, buoc_nhin_xa_huong=0.5):
+def calculate_agv_guidance(toa_do_agv, huong_agv_rad, p0, p1, p2, tam_nhin=1.0, sai_so_dich=0.1, buoc_nhin_xa_huong=0.5, khoang_cach_2_diem = 100):
     """
     Hàm tính toán điều hướng AGV dựa trên đường cong Bézier.
     
@@ -796,22 +796,28 @@ def calculate_agv_guidance(toa_do_agv, huong_agv_rad, p0, p1, p2, tam_nhin=1.0, 
     - tam_nhin: khoảng cách nhìn xa (Look-ahead distance).
     - sai_so_dich: khoảng cách chấp nhận đã đến đích.
     - buoc_nhin_xa_huong: khoảng cách từ A đến B để vẽ vector hướng.
+    - chia đường cong thành nhiều điểm và khoảng cách giữa 2 điểm là khoang_cach_2_diem
     
     Outputs:
     - reached_goal: (bool) True nếu đã đến đích.
     - diem_den: [x, y] Điểm mục tiêu A trên đường cong.
     - diem_huong: [x, y] Điểm định hướng B (A + tangent).
-    - diem_sau_muc_tieu: [x, y] Điểm trên đường cong nằm phía trước A (gần đích hơn).
     - goc_huong_target: (float) Góc tiếp tuyến tại A (radian).
     - sai_so_goc: (float) Sai số góc giữa hướng xe và hướng đường (radian, chuẩn hóa -pi to pi).
     """
     # 1. Kiểm tra xem đã đến đích chưa
     dist_to_goal = get_dist(toa_do_agv, p2)
     if dist_to_goal <= sai_so_dich:
-        return True, p2, p2, p2, 0, 0
+        return True, p2, p2, 0, 0
 
     # 2. Tạo tập hợp các điểm trên đường cong (Sampling)
-    num_samples = 100
+    # tính chiều dài xấp xỉ của đường cong để quyết đinh num_samples
+    chord_len = get_dist(p0, p2)
+    oolyline_len = get_dist(p0, p1) + get_dist(p1, p2)
+    approx_length = (chord_len + oolyline_len) / 2
+    # print(approx_length)
+    num_samples = max(10, int(approx_length / khoang_cach_2_diem))
+    # print(num_samples)
     points_on_curve = [get_quadratic_bezier_point(i/num_samples, p0, p1, p2) for i in range(num_samples + 1)]
 
     # 3. Tìm điểm trên đường cong gần AGV nhất
@@ -833,10 +839,6 @@ def calculate_agv_guidance(toa_do_agv, huong_agv_rad, p0, p1, p2, tam_nhin=1.0, 
             idx_den = i
             break
 
-    # 5. Xác định điểm phía sau mục tiêu (điểm nằm sau A, tiến về phía đích)
-    # Lấy tiến lên 2 index để có một đoạn thẳng hướng về phía trước
-    idx_sau = min(len(points_on_curve) - 1, idx_den + 2)
-    diem_sau_muc_tieu = points_on_curve[idx_sau]
 
     # 6. Lấy hướng mục tiêu (Target Heading) dựa trên tiếp tuyến tại t của Điểm A
     t_den = idx_den / num_samples
@@ -845,15 +847,15 @@ def calculate_agv_guidance(toa_do_agv, huong_agv_rad, p0, p1, p2, tam_nhin=1.0, 
     # 7. Tính điểm định hướng B
     # Vector AB sẽ hợp với trục Ox một góc đúng bằng goc_huong_target
     diem_huong = [
-        diem_den[0] + math.cos(goc_huong_target) * buoc_nhin_xa_huong,
-        diem_den[1] + math.sin(goc_huong_target) * buoc_nhin_xa_huong
+        diem_den[0] - math.cos(goc_huong_target) * buoc_nhin_xa_huong,
+        diem_den[1] - math.sin(goc_huong_target) * buoc_nhin_xa_huong
     ]
 
     # 8. Tính sai số góc và chuẩn hóa về khoảng [-pi, pi]
     sai_so_goc = goc_huong_target - huong_agv_rad
     sai_so_goc = (sai_so_goc + math.pi) % (2 * math.pi) - math.pi
 
-    return False, diem_den, diem_huong, diem_sau_muc_tieu, goc_huong_target, sai_so_goc
+    return False, diem_den, diem_huong, goc_huong_target, sai_so_goc
 
 
 # --- Ví dụ sử dụng ---

@@ -88,7 +88,7 @@ def agv_bam_duong(
     k_ct = 20.0
     omega_max = 10.0
     if di_chuyen_cung == True:
-        k_ct = max((int(abs(e_yaw *180 / math.pi)) * 4), 60) # bám ngang
+        k_ct = max((int(abs(e_yaw *180 / math.pi) * 3.5)),60) # bám ngang
         k_yaw = max(10.0, 80 - k_ct) # độ bám hướng
         # k_ct = 100
         # k_yaw = 5

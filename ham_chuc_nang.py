@@ -115,7 +115,7 @@ class Loa_pin_music_esp32:
         if AGVConfig_2.loi_an_toan == "vung_1":
             music.data["vung_1"] = 1 
 
-        if AGVConfig.dieu_khien_agv["dieu_khien_thu_cong"] == False:
+        if AGVConfig.dieu_khien_thu_cong["dieu_khien_thu_cong"] == False:
             music.void_loop_sound_speak()
         music.check_connect()
         music.xu_ly_du_lieu()
@@ -146,22 +146,23 @@ class Loa_pin_music_esp32:
 
     def music_an_toan_pin(self):
         phan_tram_pin_min = AGVConfig_2.phan_tram_pin_can_di_sac
-        if AGVConfig.phan_tram_pin < phan_tram_pin_min and phan_tram_pin.check_pin == True:
-            music.data["het_pin"] = 1
+        if AGVConfig.phan_tram_pin is not None:
+            if AGVConfig.phan_tram_pin < phan_tram_pin_min and phan_tram_pin.check_pin == True:
+                music.data["het_pin"] = 1
+            else:
+                music.data["het_pin"] = 0
+        if AGVConfig_2.loi_an_toan == "vung_1" and music.data["da_den_dich"] == 0:
+            music.data["vung_1"] = 1
         else:
-            music.data["het_pin"] = 0
-            if AGVConfig_2.loi_an_toan == "vung_1" and music.data["da_den_dich"] == 0:
-                music.data["vung_1"] = 1
-            else:
-                music.data["vung_1"] = 0
-            if AGVConfig_2.loi_an_toan == "vung_2" and music.data["da_den_dich"] == 0:
-                music.data["vung_2"] = 1
-            else:
-                music.data["vung_2"] = 0
-            if AGVConfig_2.loi_an_toan == "vung_3" and music.data["da_den_dich"] == 0:
-                music.data["vung_3"] = 1    
-            else:
-                music.data["vung_3"] = 0
+            music.data["vung_1"] = 0
+        if AGVConfig_2.loi_an_toan == "vung_2" and music.data["da_den_dich"] == 0:
+            music.data["vung_2"] = 1
+        else:
+            music.data["vung_2"] = 0
+        if AGVConfig_2.loi_an_toan == "vung_3" and music.data["da_den_dich"] == 0:
+            music.data["vung_3"] = 1    
+        else:
+            music.data["vung_3"] = 0
     # def tat_nguon(self):
     #     if self.kiem_tra_connect["lidar"] == "on":
     #         if self.loai_lidar != "usb":

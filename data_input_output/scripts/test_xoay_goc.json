@@ -1,0 +1,5 @@
+{
+    "name": "test_xoay_goc",
+    "content": "goc_xoay_yeu_cau = 0\nsai_so = 5\nif diem_tiep_theo == \"H14\" and da_den_diem_tiep_theo == True and (goc_agv < (goc_xoay_yeu_cau - sai_so) or goc_agv > (goc_xoay_yeu_cau + sai_so)):\n    xoay_goc(0, 1)\nprint(\"goc_agv = \", goc_agv)",
+    "updated_at": "2026-04-28 15:16:53"
+}

@@ -1,0 +1,5 @@
+{
+    "name": "logic_coi_khi_ra_hanh_lang",
+    "content": "# thực hiện còi và giảm tốc độ tối đa\n# diem_dau_diem_dich = [[\"C1\", \"H14\"], [\"C1\", \"H04\"], [\"H12\", \"H14\"], [\"G13\", \"H17\"],\n#                       [\"G14\", \"H110\"], [\"C2\", \"H110\"], [\"C2\", \"H010\"], \n#                       [\"G71\", \"H21\"], [\"G72\", \"H24\"], [\"G73\", \"H27\"], \n#                       [\"G74\", \"H210\"], [\"G75\", \"H213\"]]\nchu_cai_dau = [[\"G\", \"H\", 4000], [\"C\", \"H\", 4000]]\ntoc_do_tien = 5000\n# print(len(diem_vua_di_qua))\n# print(list(diem_tiep_theo), list(diem_vua_di_qua), khoang_cach_den_diem_tiep_theo)\nfor i in range(0, len(chu_cai_dau)):\n    if len(list(diem_vua_di_qua)) != 0 and len(list(diem_tiep_theo)) != 0:\n        \n        if list(diem_vua_di_qua)[0] == chu_cai_dau[i][0] and list(diem_tiep_theo)[0] == chu_cai_dau[i][1] and da_den_diem_tiep_theo == False and \\\n                                                                khoang_cach_den_diem_tiep_theo <= chu_cai_dau[i][2]:\n            bam_coi(\"coi_o_to\")\n            set_toc_do_tien(toc_do_tien)\n            break",
+    "updated_at": "2026-05-05 09:51:55"
+}

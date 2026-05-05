@@ -81,6 +81,12 @@ def normalize_angle(angle):
     if angle >= 180:
         angle -= 360
     return angle
+def normalize_angle_360(angle):
+    """
+    Chuẩn hóa một góc về khoảng [0, 360] độ.
+    """
+    return angle % 360
+# print(normalize_angle_360(-155))
 def normalize_angle_90(angle):
     """
     Chuẩn hóa một góc về khoảng [-90, 90] độ.

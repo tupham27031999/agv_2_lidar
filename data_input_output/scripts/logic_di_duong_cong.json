@@ -1,0 +1,5 @@
+{
+    "name": "logic_di_duong_cong",
+    "content": "# giảm tốc khi di chuyển theo hình cung\ndiem_dau_diem_dich = [[\"C1\", \"H14\"], [\"C1\", \"H04\"], [\"H14\", \"C1\"], [\"H04\", \"C1\"],\n                   [\"C2\", \"H110\"], [\"C2\", \"H010\"], [\"H110\", \"C2\"], [\"H010\", \"C2\"]]\n\ntoc_do_tien = 3000\nfor i in range(0, len(diem_dau_diem_dich)):\n    # print(vi_tri_hien_tai, diem_dau_diem_dich[i][0], vi_tri_tiep_theo, diem_dau_diem_dich[i][1])\n    if diem_vua_di_qua == diem_dau_diem_dich[i][0] and diem_tiep_theo == diem_dau_diem_dich[i][1]:\n        set_toc_do_tien(toc_do_tien)\n        break\n    \n",
+    "updated_at": "2026-04-28 15:16:34"
+}

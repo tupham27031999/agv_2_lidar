@@ -102,19 +102,20 @@ class detect_data_sent_driver:
 
         # tab code
         self.name_music_old_code = None
-        self.thoi_gian_bat_dau_tam_dung = None
+        self.diem_cuoi_agv = None
         
     # stop_agv == 1 do cập nhật vị trí hoặc số điểm quét quá ít hoặc nhấn stop hoặc cảm biến va chạm tác động
     def void_loop(self, stop_agv, center_px, resolution_mm, goc_agv_driver_control):
+
         # lấy tín hiệu từ esp32
         da_nang_xong = ket_noi_esp_loa.da_nang_xong
         da_ha_xong = ket_noi_esp_loa.da_ha_xong
         # cập nhật trạng thái nâng hạ cho tin hieu gủi điều khiển trung tâm
         if da_nang_xong == 1:
-            AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["trang_thai_nang_ha"] = "nang"
+            AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["trang_thai_nang_ha"] = "nang"
         if da_ha_xong == 1:
-            AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["trang_thai_nang_ha"] = "ha"
-        AGVConfig.xy_lanh_code = AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["trang_thai_nang_ha"]
+            AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["trang_thai_nang_ha"] = "ha"
+        AGVConfig.xy_lanh_code = AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["trang_thai_nang_ha"]
         
         # --------------------------------------- lỗi: cảm biến an toàn - dung_hoat_dong ---------------------------------------
         if ket_noi_esp_loa.dung_hoat_dong == 1:
@@ -137,7 +138,7 @@ class detect_data_sent_driver:
         # print(AGVConfig.dieu_khien_agv["dieu_khien_thu_cong"] == False)
         # print(f"toa_do_hien_tai", AGVConfig.toa_do_agv_mm) # toa_do_hien_tai [np.float64(-16068.8015275983), np.float64(-3829.197552147558)]
 
-        if AGVConfig.dieu_khien_agv["dieu_khien_thu_cong"] == False:
+        if AGVConfig.dieu_khien_thu_cong["dieu_khien_thu_cong"] == False:
             # load các giá trị tọa độ góc của agv, check an toàn
             self.load_data_process()
 
@@ -151,7 +152,7 @@ class detect_data_sent_driver:
             
             
             self.v_tien_max = AGVConfig.van_toc_tien_max
-            print("AGVConfig.van_toc_tien_max_code", AGVConfig.van_toc_tien_max_code)
+            # print("AGVConfig.van_toc_tien_max_code", AGVConfig.van_toc_tien_max_code)
             if AGVConfig.van_toc_tien_max_code is not None:
                 self.v_tien_max = AGVConfig.van_toc_tien_max_code
 
@@ -186,7 +187,7 @@ class detect_data_sent_driver:
                         "di_thuan_nguoc": self.di_thuan_nguoc,
                         }
         else:
-            if AGVConfig.dieu_khien_agv["ha_xe"] == 1 and da_ha_xong != 1: # 5
+            if AGVConfig.dieu_khien_thu_cong["ha_xe"] == 1 and da_ha_xong != 1: # 5
                 ket_noi_esp_loa.py_sent_esp("nang_ha#ha#0")
                 music.data["dang_ha_hang"] = 1
                 if self.debug_stop == 1:
@@ -194,7 +195,7 @@ class detect_data_sent_driver:
             else:
                 music.data["dang_ha_hang"] = 0
                 
-            if AGVConfig.dieu_khien_agv["nang_xe"] == 1 and da_nang_xong != 1:
+            if AGVConfig.dieu_khien_thu_cong["nang_xe"] == 1 and da_nang_xong != 1:
                 ket_noi_esp_loa.py_sent_esp("nang_ha#nang#0")
                 music.data["dang_nang_hang"] = 1
             else:
@@ -202,39 +203,39 @@ class detect_data_sent_driver:
 
         
         # nang, ha, lay_hang, tra_hang, xoay_agv_song_song, xoay_agv_vuong_goc, nghi hoặc ""
-        danh_sach_vi_tri_xe_lk = []
-        for key, value in AGVConfig.thong_tin_lay_tra_hang.items():
-            danh_sach_vi_tri_xe_lk.append(value[0])
-        trang_thai_agv_gui_dktt = ""
-        # IDLE,       // Nghỉ / Chờ lệnh
-        # PICKING,    // Đang lấy hàng
-        # DROPPING,   // Đang trả hàng
-        # CHARGING,   // Đang sạc
-        # BLOCKED,    // Bị vật cản - tạm thời chưa dùng
-        # ERROR,      // Lỗi kỹ thuật
-        # OFFLINE     // Mất kết nối
+        # danh_sach_vi_tri_xe_lk = []
+        # for key, value in AGVConfig.thong_tin_lay_tra_hang.items():
+        #     danh_sach_vi_tri_xe_lk.append(value[0])
+        # trang_thai_agv_gui_dktt = ""
+        # # IDLE,       // Nghỉ / Chờ lệnh
+        # # PICKING,    // Đang lấy hàng
+        # # DROPPING,   // Đang trả hàng
+        # # CHARGING,   // Đang sạc
+        # # BLOCKED,    // Bị vật cản - tạm thời chưa dùng
+        # # ERROR,      // Lỗi kỹ thuật
+        # # OFFLINE     // Mất kết nối
         
-        if trang_thai != "" or AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"] == "":
-            if self.hoan_thanh_den_vi_tri_dich == True:
-                trang_thai_agv_gui_dktt = "IDLE" # đợi lệnh có thể là đã ở đích chờ lệnh tiếp theo
-            elif AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"] == "":
-                if da_nang_xong == 1:
-                    trang_thai_agv_gui_dktt = "ERROR" # lỗi do đang nâng mà lại không có đích đến vì mới mở phần mềm auto hạ 
-                    # print("lỗi do đang nâng mà lại không có đích đến vì mới mở phần mềm auto hạ ")
-                else:
-                    trang_thai_agv_gui_dktt = "IDLE" # đang không làm gì nên chờ lệnh
-            else:
-                if AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"] in danh_sach_vi_tri_xe_lk:
-                    trang_thai_agv_gui_dktt = "DROPPING" # đang trả hàng
-                else:
-                    trang_thai_agv_gui_dktt = "PICKING" # đang lấy hàng
-        else:
-            trang_thai_agv_gui_dktt = "ERROR" # có thể đang lỗi hoặc đang điều khiển thủ công tạm hiểu là lỗi hoặc chưa thiết lập đường đi
-            # print("có thể đang lỗi hoặc đang điều khiển thủ công tạm hiểu là lỗi hoặc chưa thiết lập đường đi")
-        if AGVConfig.sac_pin == True:
-            trang_thai_agv_gui_dktt = "CHARGING" # đang sạc
+        # if trang_thai != "" or AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_cuoi"] == "":
+        #     if self.hoan_thanh_den_vi_tri_dich == True:
+        #         trang_thai_agv_gui_dktt = "IDLE" # đợi lệnh có thể là đã ở đích chờ lệnh tiếp theo
+        #     elif AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_cuoi"] == "":
+        #         if da_nang_xong == 1:
+        #             trang_thai_agv_gui_dktt = "ERROR" # lỗi do đang nâng mà lại không có đích đến vì mới mở phần mềm auto hạ 
+        #             # print("lỗi do đang nâng mà lại không có đích đến vì mới mở phần mềm auto hạ ")
+        #         else:
+        #             trang_thai_agv_gui_dktt = "IDLE" # đang không làm gì nên chờ lệnh
+        #     else:
+        #         if AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_cuoi"] in danh_sach_vi_tri_xe_lk:
+        #             trang_thai_agv_gui_dktt = "DROPPING" # đang trả hàng
+        #         else:
+        #             trang_thai_agv_gui_dktt = "PICKING" # đang lấy hàng
+        # else:
+        #     trang_thai_agv_gui_dktt = "ERROR" # có thể đang lỗi hoặc đang điều khiển thủ công tạm hiểu là lỗi hoặc chưa thiết lập đường đi
+        #     # print("có thể đang lỗi hoặc đang điều khiển thủ công tạm hiểu là lỗi hoặc chưa thiết lập đường đi")
+        # if AGVConfig.sac_pin == True:
+        #     trang_thai_agv_gui_dktt = "CHARGING" # đang sạc
 
-        AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["trang_thai_agv_gui"] = trang_thai_agv_gui_dktt
+        # AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["trang_thai_agv_gui"] = trang_thai_agv_gui_dktt
 
         return driver_motor_quay_trai, driver_motor_quay_phai, data_return
 
@@ -252,13 +253,6 @@ class detect_data_sent_driver:
             if AGVConfig.music_name_code in music.data:
                 if music.data[AGVConfig.music_name_code] == 0:
                     music.data[AGVConfig.music_name_code] = 1
-        
-        # cài thời gian bắt đầu tính tạm dừng
-        if AGVConfig.dung_trong_giay_code is not None:
-            if self.thoi_gian_bat_dau_tam_dung is None:
-                self.thoi_gian_bat_dau_tam_dung = time.time()
-        else:
-            self.thoi_gian_bat_dau_tam_dung = None
 
 
         # cập nhật biến quay trái quay phải của driver_motor
@@ -270,19 +264,13 @@ class detect_data_sent_driver:
 
         # ----------------------------------------------- stop ------------------------------------------------
         # điều khiển trung tâm gửi đến lệnh stop
-        if AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["stop"] == True:
+        if AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["stop"] == True:
             stop = 1
             if self.debug_stop == 1:
                 print("---- stop do webserver gửi tín hiệu stop ----")
         # stop do tab code
-        if AGVConfig.dung_trong_giay_code is not None:
-            if self.thoi_gian_bat_dau_tam_dung is not None:
-                stop = 1
-                if self.debug_stop == 1:
-                    print("---- stop do tab code ----")
-                if time.time() - self.thoi_gian_bat_dau_tam_dung > AGVConfig.dung_trong_giay_code:
-                    self.thoi_gian_bat_dau_tam_dung = None
-                    AGVConfig.dung_trong_giay_code = None
+        if AGVConfig.stop_code is not None:
+            stop = 1
 
         # dừng đợi lệnh resume AGVConfig.stop_code_resume
         if AGVConfig.stop_code_resume == True:
@@ -314,61 +302,93 @@ class detect_data_sent_driver:
                 music.data["dang_ha_hang"] = 0    
         # --------------------------------------------
         # điều kiện để vào if này là đã nhận được tín hiệu điểm đích mới từ webserver, có điểm đích đến, đang ở trạng thái run, và điểm đích đến không phải là "None"
-        if AGVConfig.tin_hieu_nhan != {} and AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"] != "" and AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"] != "None":
+        if AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"] != {} and AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_cuoi"] != "" and AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_cuoi"] != "None":
             # nếu chưa có vị trí hiện tại của agv
             diem_dau, khoang_cach = self.tim_diem_gan_nhat(AGVConfig.danh_sach_diem, center_px, resolution_mm)
             if khoang_cach <= 600:
                 if self.vi_tri_nhan_tin_hieu_nhan == "":
                     self.vi_tri_nhan_tin_hieu_nhan = diem_dau
-                    AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["vi_tri_hien_tai"] = diem_dau
+                    AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_vua_di_qua"] = diem_dau
             
             # nếu có vị trí hiện tại và vị trí đích thì tìm đường đi
-            if AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["vi_tri_hien_tai"] != "":
+            if AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_vua_di_qua"] != "":
                 
                 # print("graph = ", graph)
                 # tìm danh sách đường đi
                 p_actual = []
-                if len(AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["paths"]) == 0:
-                    graph = tim_duong_di.tao_graph()
-                    if AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["diem_tiep_theo"] == "":
-                        start_node = AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["vi_tri_hien_tai"]
-                    else:
-                        start_node = AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["diem_tiep_theo"]
-                    goal_node = AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"]
+                # if len(AGVConfig.AGV_STATES[AGVConfig.name_agv]["dieu_khien_agv"]["danh_sach_duong_di"]) == 0:
+                #     graph = tim_duong_di.tao_graph()
+                #     if AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_tiep_theo"] == "":
+                #         start_node = AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_vua_di_qua"]
+                #     else:
+                #         start_node = AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_tiep_theo"]
+                #     if AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_cuoi"] in AGVConfig.danh_sach_diem:
+                #         goal_node = AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_cuoi"]
 
-                    obstacles_points = []
-                    obstacles_paths = []
+                #         obstacles_points = []
+                #         obstacles_paths = []
 
-                    # print(f"Tìm đường từ {start_node} -> {goal_node} với vật cản điểm {obstacles_points} và đường {obstacles_paths}")
-                    p_ideal, c_ideal, p_actual, c_actual, c_diff = tim_duong_di.a_star(start_node, goal_node, vat_can_diem=obstacles_points, vat_can_duong=obstacles_paths)
-                    p_actual, c_ideal = tim_duong_di.toi_uu_hoa_duong_di(p_actual, 5)
-                    # thêm vị trí hiện tại vào đầu danh sách p_actual
-                    # print(f"\nĐường đi lý tưởng: {p_ideal} (Chi phí: {c_ideal:.2f})")
-                    # print(f"Đường đi thực tế: {p_actual} (Chi phí: {c_actual:.2f})")
+                #         # print(f"Tìm đường từ {start_node} -> {goal_node} với vật cản điểm {obstacles_points} và đường {obstacles_paths}")
+                #         p_ideal, c_ideal, p_actual, c_actual, c_diff = tim_duong_di.a_star(start_node, goal_node, vat_can_diem=obstacles_points, vat_can_duong=obstacles_paths)
+                #         p_actual, c_ideal = tim_duong_di.toi_uu_hoa_duong_di(p_actual, 5)
+                #         # thêm vị trí hiện tại vào đầu danh sách p_actual
+                #         # print(f"\nĐường đi lý tưởng: {p_ideal} (Chi phí: {c_ideal:.2f})")
+                #         # print(f"Đường đi thực tế: {p_actual} (Chi phí: {c_actual:.2f})")
 
-                else:
-                    # chỉ vào khi self.list_data là None, tức là chưa có dữ liệu đường đi nào được tạo ra trước đó, thì mới lấy đường đi từ webserver để tối ưu hóa lại
-                    p_actual = AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["paths"]
-                    # print("++++++++++++++++", p_actual)
+                # else:
+                    # # chỉ vào khi self.list_data là None, tức là chưa có dữ liệu đường đi nào được tạo ra trước đó, thì mới lấy đường đi từ webserver để tối ưu hóa lại
+                    # p_actual = AGVConfig.AGV_STATES[AGVConfig.name_agv]["dieu_khien_agv"]["danh_sach_duong_di"]
+                    # # print("++++++++++++++++", p_actual)
+                p_actual = AGVConfig.AGV_STATES[AGVConfig.name_agv]["dieu_khien_agv"]["danh_sach_duong_di"]
 
 
 
 
                 # print("AGVConfig.danh_sach_duong_di", AGVConfig.danh_sach_duong_di)
                 # ----------------------------------------------------- xử lý -------------------------------------------------------------------------
+                cap_nhat_do_dich_moi = 0
+                if self.diem_cuoi_agv is None: 
+                    self.diem_cuoi_agv = AGVConfig.AGV_STATES[AGVConfig.name_agv]["dieu_khien_agv"]["diem_cuoi"]
+                else:
+                    if self.diem_cuoi_agv != AGVConfig.AGV_STATES[AGVConfig.name_agv]["dieu_khien_agv"]["diem_cuoi"]:
+                        
+                        if AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["danh_sach_duong_di"] != p_actual:
+                            self.diem_cuoi_agv = AGVConfig.AGV_STATES[AGVConfig.name_agv]["dieu_khien_agv"]["diem_cuoi"]
+                            cap_nhat_do_dich_moi = 1
+                            # print("----------")
+                # print("cap_nhat_do_dich_moi", cap_nhat_do_dich_moi, self.diem_cuoi_agv, AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["danh_sach_duong_di"], p_actual)
+
+                # print("self.convert_data_run_agv", self.convert_data_run_agv["run_diem"], self.convert_data_run_agv["run_huong"])
+                # if len(AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["danh_sach_duong_di"]) != len(p_actual) and len(p_actual) != 1:
+                #     cap_nhat_do_dich_moi = 1
+
+                # print("cap_nhat_do_dich_moi", cap_nhat_do_dich_moi, )
                 # cập nhật danh sách đường đi nếu đến đích tiếp theo
-                if (self.convert_data_run_agv["run_diem"] == "OK" and self.convert_data_run_agv["run_huong"] == "OK") or len(AGVConfig.danh_sach_duong_di) == 0:
-                    if len(AGVConfig.danh_sach_duong_di) == 0:
+                if (self.convert_data_run_agv["run_diem"] == "OK" and self.convert_data_run_agv["run_huong"] == "OK") or \
+                                                                                len(AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["danh_sach_duong_di"]) == 0 or \
+                                                                                    cap_nhat_do_dich_moi == 1:
+                    self.hoan_thanh_den_vi_tri_dich = False
+                    if len(AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["danh_sach_duong_di"]) == 0:
                         AGVConfig.da_den_diem_tiep_theo_code = False
                     else:
                         AGVConfig.da_den_diem_tiep_theo_code = True
-
+                        # if len(p_actual) == 1:
+                        #     self.hoan_thanh_den_vi_tri_dich = True
+                        #     if AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_vua_di_qua"] == "X1":
+                        #         AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_vua_di_qua"] = "G11"
+                        #         AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_cuoi"] = "G35"
+                        #     elif AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_vua_di_qua"] == "G11":
+                        #         AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_vua_di_qua"] = "G35"
+                        #         AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_cuoi"] = "G11"
+                        #     else:
+                        #         AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_vua_di_qua"] = "G11"
+                        #         AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_cuoi"] = "G35"
                     
                     van_toc_phan_hoi_max = max(AGVConfig.van_toc_phan_hoi_trai, AGVConfig.van_toc_phan_hoi_phai)
-                    if abs(van_toc_phan_hoi_max) < 200:
-                        if AGVConfig.xoay_goc_code is None and AGVConfig.xoay_goc_code is None and AGVConfig.nang_ha_xe_code is None and AGVConfig.dung_trong_giay_code is None:
-                            AGVConfig.danh_sach_duong_di = p_actual
-                            AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["danh_sach_duong_di"] = p_actual
+                    if AGVConfig.xoay_goc_code is None and AGVConfig.nang_ha_xe_code is None:
+                        if abs(van_toc_phan_hoi_max) < 200:
+                            # self.diem_cuoi_agv = AGVConfig.AGV_STATES[AGVConfig.name_agv]["dieu_khien_agv"]["diem_cuoi"]
+                            AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["danh_sach_duong_di"] = p_actual
                             # reset để di chuyển tiếp trên đường mới
                             driver_motor_quay_trai = 0
                             driver_motor_quay_phai = 0
@@ -376,27 +396,36 @@ class detect_data_sent_driver:
                             self.vi_tri_nhan_tin_hieu_nhan = ""
                             self.convert_data_run_agv = self.convert_data_run_agv0.copy()
                             self.dang_re = 0
-                    else:
-                        stop = 1
-                        if self.debug_stop == 1:
-                            print("stop do đến đích tiếp theo")
+                        else:
+                            stop = 1
+                            if self.debug_stop == 1:
+                                print("stop do đến đích tiếp theo")
                 else:
                     AGVConfig.da_den_diem_tiep_theo_code = False
                 
 
                 ten_diem_bat_dau = ""
                 ten_diem_tiep_theo = ""
-                self.hoan_thanh_den_vi_tri_dich == False
-                if len(AGVConfig.danh_sach_duong_di) >= 2:
-                    ten_diem_bat_dau = AGVConfig.danh_sach_duong_di[0]
-                    ten_diem_tiep_theo = AGVConfig.danh_sach_duong_di[1]
-                elif len(AGVConfig.danh_sach_duong_di) == 1:
-                    self.hoan_thanh_den_vi_tri_dich == True
 
-                AGVConfig.vi_tri_hien_tai_code = ten_diem_bat_dau
-                AGVConfig.vi_tri_tiep_theo_code = ten_diem_tiep_theo
-                AGVConfig.vi_tri_diem_cuoi_code = AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"]
-                AGVConfig.danh_sach_duong_di_code = AGVConfig.danh_sach_duong_di
+                if len(AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["danh_sach_duong_di"]) >= 2:
+                    ten_diem_bat_dau = AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["danh_sach_duong_di"][0]
+                    ten_diem_tiep_theo = AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["danh_sach_duong_di"][1]
+                # elif len(AGVConfig.danh_sach_duong_di) == 1:
+                    
+                    # "agv1": {"vi_tri_hien_tai": "X1", "diem_tiep_theo": "", "dich_den": "AGVConfig.tin_hieu_nhan["vi_tri_hien_tai"]",
+
+                AGVConfig.diem_vua_di_qua_code = ten_diem_bat_dau
+                AGVConfig.diem_tiep_theo_code = ten_diem_tiep_theo
+                AGVConfig.diem_cuoi_code = AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_cuoi"]
+                AGVConfig.yeu_cau_gui_agv_code = AGVConfig.AGV_STATES[AGVConfig.name_agv]["dieu_khien_agv"]["yeu_cau_gui_agv"]
+                AGVConfig.danh_sach_duong_di_code = AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["danh_sach_duong_di"]
+
+                toa_do_pixel = [AGVConfig.danh_sach_diem[AGVConfig.diem_cuoi_code][0], AGVConfig.danh_sach_diem[AGVConfig.diem_cuoi_code][1]]
+                world_x_mm = (toa_do_pixel[0] - center_px[0]) * resolution_mm
+                world_y_mm = (toa_do_pixel[1] - center_px[1]) * resolution_mm
+                toa_do_diem_cuoi = [int(world_x_mm), int(world_y_mm)]
+
+                AGVConfig.khoang_cach_den_diem_cuoi_code = tinh_luong_giac.calculate_distance(AGVConfig.toa_do_agv_mm, toa_do_diem_cuoi)
 
                 if self.hoan_thanh_den_vi_tri_dich == True:
                     music.data["den_dich"] = 1
@@ -406,15 +435,17 @@ class detect_data_sent_driver:
                 else:
                     music.data["den_dich"] = 0
 
-                
+                khoang_cach_den_diem_tiep_theo_code = None
                 # lấy dữ liệu điểm đầu và điểm tiếp theo để di chuyển
                 if ten_diem_bat_dau != "" and ten_diem_tiep_theo != "":
                     check_angle_distance = "distance"
                     angle_deg = 0
                     self.dang_re = 0
 
-                    AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["diem_tiep_theo"] = ten_diem_tiep_theo # bên điều khiển trung tâm sẽ lấy điểm tiếp theo này và đích để tìm đường
+                    AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_tiep_theo"] = ten_diem_tiep_theo # bên điều khiển trung tâm sẽ lấy điểm tiếp theo này và đích để tìm đường
                     goc_dich = [AGVConfig.danh_sach_diem[ten_diem_tiep_theo][2], AGVConfig.danh_sach_diem[ten_diem_tiep_theo][3]]
+                    goc_code = AGVConfig.xoay_goc_code
+                    xoay_goc_mode_code = AGVConfig.xoay_goc_mode_code
 
                     # tọa độ điểm đầu và điểm tiếp theo
                     toa_do_pixel = [AGVConfig.danh_sach_diem[ten_diem_bat_dau][0], AGVConfig.danh_sach_diem[ten_diem_bat_dau][1]]
@@ -428,8 +459,10 @@ class detect_data_sent_driver:
                     toa_do_diem_tiep_theo = [int(world_x_mm), int(world_y_mm)]
 
                     distance = tinh_luong_giac.calculate_distance(AGVConfig.toa_do_agv_mm, toa_do_diem_tiep_theo)
-                    if ten_diem_tiep_theo == AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"]:
+                    if ten_diem_tiep_theo == AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_cuoi"]:
                         AGVConfig.khoang_cach_den_dich_code = distance
+
+                    khoang_cach_den_diem_tiep_theo_code = distance
                      
 
                     # xử lý đường cong
@@ -438,7 +471,8 @@ class detect_data_sent_driver:
                     ten_duong_thuc_te = ten_duong_1 if ten_duong_1 in AGVConfig.danh_sach_duong else (ten_duong_2 if ten_duong_2 in AGVConfig.danh_sach_duong else None)
                     toa_do_diem_kiem_soat = []
                     if not ten_duong_thuc_te:
-                        print("Đường ten_duong_1 hoặc ten_duong_2 không tồn tại trong danh sách đường.", ten_duong_1, ten_duong_2)
+                        # print("Đường ten_duong_1 hoặc ten_duong_2 không tồn tại trong danh sách đường.", ten_duong_1, ten_duong_2)
+                        pass
                         # X1_H04_C_X1-H04 H04_X1_C_H04-X1
                     else:
                         # "C11_C12": [["C11","C12"],"curve","C11-C12"]
@@ -456,21 +490,21 @@ class detect_data_sent_driver:
                             sai_so_dich = 1
                             buoc_nhin_xa_huong = 300 # Khoảng cách cộng thêm để tìm điểm định hướng
                             toa_do_agv = AGVConfig.toa_do_agv_mm
+                            khoang_cach_2_diem = 150
 
                             # 2. GỌI HÀM TÍNH TOÁN ĐIỀU HƯỚNG
-                            reached, diem_A, diem_B, diem_Sau_A, goc_target, sai_so = tim_duong_di.calculate_agv_guidance(
-                                toa_do_agv, huong_hien_tai_rad, toa_do_diem_bat_dau, toa_do_diem_kiem_soat, toa_do_diem_tiep_theo, tam_nhin, sai_so_dich, buoc_nhin_xa_huong
-                            )
-                            
+                            reached, diem_A, diem_huong, goc_target, sai_so = tim_duong_di.calculate_agv_guidance(
+                                toa_do_agv, huong_hien_tai_rad, toa_do_diem_bat_dau, toa_do_diem_kiem_soat, toa_do_diem_tiep_theo, tam_nhin, sai_so_dich, buoc_nhin_xa_huong, khoang_cach_2_diem)
+                            # điểm A là điểm đích, điểm B là hướng yêu cầu
                             if len(diem_A) != 0:
-                                toa_do_diem_bat_dau = [int(diem_A[0]), int(diem_A[1])]
-                            else:
-                                toa_do_diem_bat_dau = []
-                                print("error 1")
-                            if len(diem_B) != 0:
-                                toa_do_diem_tiep_theo = [int(diem_B[0]), int(diem_B[1])]
+                                toa_do_diem_tiep_theo = [int(diem_A[0]), int(diem_A[1])]
                             else:
                                 toa_do_diem_tiep_theo = []
+                                print("error 1")
+                            if len(diem_huong) != 0:
+                                toa_do_diem_bat_dau = [int(diem_huong[0]), int(diem_huong[1])]
+                            else:
+                                toa_do_diem_bat_dau = []
                                 print("error 2")
 
 
@@ -478,6 +512,7 @@ class detect_data_sent_driver:
                     self.toa_do_diem_dau = toa_do_diem_bat_dau
                     self.toa_do_diem_dich = toa_do_diem_tiep_theo
                     self.distance = distance
+                    
 
                     # xác định điểm hướng cần đi đến
                     angle_rad_thuan = tinh_luong_giac.angle_with_ox(AGVConfig.toa_do_agv_mm, self.robot_direction)
@@ -500,7 +535,7 @@ class detect_data_sent_driver:
 
                     # bật nhạc sắp đến đích
                     
-                    if distance <= 2000 and ten_diem_tiep_theo == AGVConfig.tin_hieu_nhan[AGVConfig.name_agv]["dich_den"]:
+                    if distance <= 2000 and ten_diem_tiep_theo == AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]["diem_cuoi"]:
                         khoang_cach_den_dich_code = distance
 
                         if distance > 100:
@@ -516,10 +551,10 @@ class detect_data_sent_driver:
                     # agv rẽ trái hoặc phải do góc quá lớn và không phải là đang đi trên đường cong
                     angle_check = 10
                     if len(self.toa_do_diem_kiem_soat) != 0:
-                        angle_check = 50
+                        angle_check = 40
                     if abs(angle_deg) >= angle_check:
                         self.dang_re = 1
-                        print("rẽ do lệch")
+                        # print("rẽ do lệch")
                     else:
                         self.dang_re = 0
 
@@ -544,6 +579,7 @@ class detect_data_sent_driver:
                         self.convert_data_run_agv["run_huong"] = "OK"
 
                     if self.convert_data_run_agv["run_diem"] != "OK":
+                        angle_deg = angle_and_distance.normalize_angle_90(angle_deg)
                         # lựa chọn khoảng cách đến đích, các điểm không cần độ chính xác cao
                         add_kc_di_chuyen_luon = 0
                         del_kc_di_chuyen_luon = 0
@@ -560,41 +596,44 @@ class detect_data_sent_driver:
                         if distance < self.distance_old:
                             self.distance_old = distance
                     else:
-                        if self.convert_data_run_agv["run_huong"] != "OK":
+                        if self.convert_data_run_agv["run_huong"] != "OK" or goc_code is not None:
                             check_angle_distance = "angle"
                             self.dang_re = 1
-                            print("rẽ trực tiếp")
+                            # print("rẽ trực tiếp")
 
                             if self.convert_data_run_agv["run_huong"] != "OK":
-                                angle_deg = int(goc_agv_driver_control * 180 / np.pi - float(goc_dich[1]))  
+                                angle_deg = ad.normalize_angle(int(goc_agv_driver_control * 180 / np.pi - float(goc_dich[1])))  # chuẩn hóa về [-180, 180] độ
                             else:
-                                if self.di_thuan_nguoc == 1: # Đi lùi
-                                    A1 = np.array(self.toa_do_diem_dau)
-                                    B1 = np.array(self.toa_do_diem_dich)
-                                    A2 = np.array(AGVConfig.toa_do_agv_mm)
-                                    B2 = np.array(self.robot_direction_nguoc)
-                                    goc_1 = angle_and_distance.angle_with_ox(A1, B1)
-                                    goc_2 = angle_and_distance.angle_with_ox(A2, B2)
-                                    goc_1 = angle_and_distance.normalize_angle(goc_1)
-                                    goc_2 = angle_and_distance.normalize_angle(goc_2)
-                                    angle_deg = goc_1 - goc_2
+                                if xoay_goc_mode_code == 1:
+                                    angle_deg = ad.normalize_angle(int(goc_agv_driver_control * 180 / np.pi - goc_code)) # xoay đúng đầu
+                                    print("angle_deg ----------", angle_deg)
                                 else:
-                                    A1 = np.array(self.toa_do_diem_dau)
-                                    B1 = np.array(self.toa_do_diem_dich)
-                                    A2 = np.array(AGVConfig.toa_do_agv_mm)
-                                    B2 = np.array(self.robot_direction)
-                                    goc_1 = angle_and_distance.angle_with_ox(A1, B1)
-                                    goc_2 = angle_and_distance.angle_with_ox(A2, B2)
-                                    goc_1 = angle_and_distance.normalize_angle(goc_1)
-                                    goc_2 = angle_and_distance.normalize_angle(goc_2)
-                                    angle_deg = goc_1 - goc_2
+                                    angle_deg = angle_and_distance.normalize_angle_90(int(goc_agv_driver_control * 180 / np.pi - goc_code)) # xoay thân
+                                # if self.di_thuan_nguoc == 1: # Đi lùi
+                                #     A1 = np.array(self.toa_do_diem_dau)
+                                #     B1 = np.array(self.toa_do_diem_dich)
+                                #     A2 = np.array(AGVConfig.toa_do_agv_mm)
+                                #     B2 = np.array(self.robot_direction_nguoc)
+                                #     goc_1 = angle_and_distance.angle_with_ox(A1, B1)
+                                #     goc_2 = angle_and_distance.angle_with_ox(A2, B2)
+                                #     goc_1 = angle_and_distance.normalize_angle(goc_1)
+                                #     goc_2 = angle_and_distance.normalize_angle(goc_2)
+                                #     angle_deg = goc_1 - goc_2
+                                # else:
+                                #     A1 = np.array(self.toa_do_diem_dau)
+                                #     B1 = np.array(self.toa_do_diem_dich)
+                                #     A2 = np.array(AGVConfig.toa_do_agv_mm)
+                                #     B2 = np.array(self.robot_direction)
+                                #     goc_1 = angle_and_distance.angle_with_ox(A1, B1)
+                                #     goc_2 = angle_and_distance.angle_with_ox(A2, B2)
+                                #     goc_1 = angle_and_distance.normalize_angle(goc_1)
+                                #     goc_2 = angle_and_distance.normalize_angle(goc_2)
+                                #     angle_deg = goc_1 - goc_2
                                     
-                            angle_deg = angle_and_distance.normalize_angle_90(angle_deg)
-                            delta_ang = self.angle_min
                             # điểu kiện để tun_huong OK
                             van_toc_phan_hoi_max = max(AGVConfig.van_toc_phan_hoi_trai, AGVConfig.van_toc_phan_hoi_phai)
                             if abs(van_toc_phan_hoi_max) < 200:
-                                if abs(angle_deg) <= delta_ang:
+                                if abs(angle_deg) <= self.angle_min:
                                     self.convert_data_run_agv["run_huong"] = "OK"
                                     self.convert_data_run_agv["run_huong_2"] = "OK"
                             # music
@@ -608,8 +647,9 @@ class detect_data_sent_driver:
                             else:
                                 music.data["re_trai"] = 0
 
+
                     self.check_angle_distance = check_angle_distance
-                    self.angle =  angle_and_distance.normalize_angle_90(angle_deg)
+                    self.angle =  angle_deg
                     self.distance = distance
                 else:
                     driver_motor_quay_trai = 0
@@ -621,6 +661,7 @@ class detect_data_sent_driver:
                     stop = 1
                     if self.debug_stop == 1:
                         print("đã đến đích")
+                AGVConfig.khoang_cach_den_diem_tiep_theo_code = khoang_cach_den_diem_tiep_theo_code
             else:
                 stop = 1
                 if self.debug_stop == 1:

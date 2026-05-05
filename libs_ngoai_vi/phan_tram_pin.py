@@ -18,6 +18,7 @@ gui_bat_loa_thanh_cong = 0
 check_time = 0
 
 phan_tram_pin = 0 
+phan_tram_pin_old = None
 check_pin = False
 time_check_pin = 0
 
@@ -76,7 +77,7 @@ class Python_Esp:
         self.gui_nang_ha_thanh_cong = 0
         self.gui_nang_ha = ""
 
-        self.phan_tram_pin = 0 
+        self.phan_tram_pin = None
         self.check_pin = False
         self.vol_max = vol_max
         self.vol_min = vol_min
@@ -220,14 +221,21 @@ def check_connect():
     global check_time
     check_time = time.time()
 def python_serial():
-    global sent_data,sent_data_new, connected, check_connect_serial, connect_serial, phan_tram_pin, check_pin, time_check_pin
+    global sent_data,sent_data_new, connected, check_connect_serial, connect_serial, phan_tram_pin, check_pin, time_check_pin, phan_tram_pin_old
     
     py_esp = Python_Esp()
     py_esp.khai_bao_serial()
     sent_data = "A540900800000000000000007D"
 
     while connect_serial:
-        phan_tram_pin = int(py_esp.phan_tram_pin)
+        if py_esp.phan_tram_pin is not None:
+            if int(py_esp.phan_tram_pin) > 0:
+                if phan_tram_pin_old is None:
+                    phan_tram_pin_old = int(py_esp.phan_tram_pin)
+                else:
+                    phan_tram_pin_old = min(int(py_esp.phan_tram_pin),phan_tram_pin_old)
+        phan_tram_pin = phan_tram_pin_old
+        
         check_pin = py_esp.check_pin
         # if time.time() - time_check_pin > 10:
         time_check_pin = time.time()

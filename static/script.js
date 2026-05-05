@@ -1247,9 +1247,9 @@ async function updateStatusUI() {
         }
 
         // Đồng bộ trạng thái các nút nâng hạ xe từ server
-        if (data.dieu_khien_agv) {
+        if (data.dieu_khien_thu_cong) {
             ['nang_xe', 'ha_xe'].forEach(action => {
-                const val = data.dieu_khien_agv[action];
+                const val = data.dieu_khien_thu_cong[action];
                 // Cập nhật trạng thái cục bộ để đồng bộ với server
                 manualControlState[action] = val;
                 // Cập nhật màu sắc nút (class btn-active cho màu cam)
@@ -1271,7 +1271,7 @@ async function updateStatusUI() {
         // Chỉ cập nhật các thành phần nặng của tab Home nếu KHÔNG ở trong trạng thái đang Mapping tập trung
         if (!isMappingTabActive || !isMappingWorkInProgress) {
             if (window.updatePlannedPath) {
-                window.updatePlannedPath(data.toa_do_agv_pixel[0], data.toa_do_agv_pixel[1], data.danh_sach_duong_di);
+                window.updatePlannedPath(data.toa_do_agv_pixel[0], data.toa_do_agv_pixel[1], data.danh_sach_duong_di, data.diem_tiep_theo, data.diem_vua_di_qua);
             }
             if (window.updateLidarPoints) {
                 window.updateLidarPoints(data.danh_sach_diem_lidar, data.danh_sach_diem_vat_can);

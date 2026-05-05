@@ -90,52 +90,52 @@ def calculate_agv_guidance(toa_do_agv, huong_agv_rad, p0, p1, p2, tam_nhin=1.0, 
     sai_so_goc = (sai_so_goc + math.pi) % (2 * math.pi) - math.pi
 
     return False, diem_den, diem_huong, diem_sau_muc_tieu, goc_huong_target, sai_so_goc
+# print(str([1, 2]))
 
+# danh_sach_diem = {'C10': [0, 0, 'không hướng', 0], 'C11': [4, 4, 'không hướng', 0], "C10-C11": [0, 4, 'không hướng', 0]}
+# danh_sach_duong = {"C10_C11_C_C10-C11": ['C10', 'C11', 'C', 'C10-C11'], "C11_C10_C_C11-C10": ['C11', 'C10', 'C', 'C10-C11']}
 
-danh_sach_diem = {'C10': [0, 0, 'không hướng', 0], 'C11': [4, 4, 'không hướng', 0], "C10-C11": [0, 4, 'không hướng', 0]}
-danh_sach_duong = {"C10_C11_C_C10-C11": ['C10', 'C11', 'C', 'C10-C11'], "C11_C10_C_C11-C10": ['C11', 'C10', 'C', 'C10-C11']}
+# toa_do_agv = [0, 0]
+# tam_nhin = 1.0
+# buoc_nhin_xa_huong = 0.5 # Khoảng cách cộng thêm để tìm điểm định hướng
+# sai_so_dich = 0.05 # Khoảng cách để coi là đã đến đích (ví dụ 10cm)
 
-toa_do_agv = [0, 0]
-tam_nhin = 1.0
-buoc_nhin_xa_huong = 0.5 # Khoảng cách cộng thêm để tìm điểm định hướng
-sai_so_dich = 0.05 # Khoảng cách để coi là đã đến đích (ví dụ 10cm)
+# ten_diem_dau = "C10"
+# ten_diem_cuoi = "C11"
+# ten_duong_1 = f"{ten_diem_dau}_{ten_diem_cuoi}_C_{ten_diem_dau}-{ten_diem_cuoi}"
+# ten_duong_2 = f"{ten_diem_cuoi}_{ten_diem_dau}_C_{ten_diem_cuoi}-{ten_diem_dau}"
+# # print("Danh sách điểm:", danh_sach_diem)
+# # print("Danh sách đường:", danh_sach_duong)
+# print("Tên đường 1:", ten_duong_1)
+# print("Tên đường 2:", ten_duong_2)
 
-ten_diem_dau = "C10"
-ten_diem_cuoi = "C11"
-ten_duong_1 = f"{ten_diem_dau}_{ten_diem_cuoi}_C_{ten_diem_dau}-{ten_diem_cuoi}"
-ten_duong_2 = f"{ten_diem_cuoi}_{ten_diem_dau}_C_{ten_diem_cuoi}-{ten_diem_dau}"
-# print("Danh sách điểm:", danh_sach_diem)
-# print("Danh sách đường:", danh_sach_duong)
-print("Tên đường 1:", ten_duong_1)
-print("Tên đường 2:", ten_duong_2)
+# ton_tai = 0
+# ten_duong_thuc_te = ten_duong_1 if ten_duong_1 in danh_sach_duong else (ten_duong_2 if ten_duong_2 in danh_sach_duong else None)
 
-ton_tai = 0
-ten_duong_thuc_te = ten_duong_1 if ten_duong_1 in danh_sach_duong else (ten_duong_2 if ten_duong_2 in danh_sach_duong else None)
+# if not ten_duong_thuc_te:
+#     print("Đường ten_duong_1 hoặc ten_duong_2 không tồn tại trong danh sách đường.")
+# else:
+#     # 1. Lấy thông tin đường và các điểm tọa độ
+#     path_info = danh_sach_duong[ten_duong_thuc_te]
+#     diem_dau = danh_sach_diem[ten_diem_dau][:2]   # Điểm bắt đầu
+#     diem_cuoi = danh_sach_diem[ten_diem_cuoi][:2]  # Điểm kết thúc
+#     diem_kiem_soat = danh_sach_diem[path_info[3]][:2]   # Điểm kiểm soát (lấy từ index 3 của path_info)
 
-if not ten_duong_thuc_te:
-    print("Đường ten_duong_1 hoặc ten_duong_2 không tồn tại trong danh sách đường.")
-else:
-    # 1. Lấy thông tin đường và các điểm tọa độ
-    path_info = danh_sach_duong[ten_duong_thuc_te]
-    diem_dau = danh_sach_diem[ten_diem_dau][:2]   # Điểm bắt đầu
-    diem_cuoi = danh_sach_diem[ten_diem_cuoi][:2]  # Điểm kết thúc
-    diem_kiem_soat = danh_sach_diem[path_info[3]][:2]   # Điểm kiểm soát (lấy từ index 3 của path_info)
+#     # Giả sử hướng hiện tại của AGV lấy từ hệ thống (đổi ra radian)
+#     huong_hien_tai_rad = math.radians(30)
 
-    # Giả sử hướng hiện tại của AGV lấy từ hệ thống (đổi ra radian)
-    huong_hien_tai_rad = math.radians(30)
+#     # 2. GỌI HÀM TÍNH TOÁN ĐIỀU HƯỚNG
+#     reached, diem_A, diem_B, diem_Sau_A, goc_target, sai_so = calculate_agv_guidance(
+#         toa_do_agv, huong_hien_tai_rad, diem_dau, diem_kiem_soat, diem_cuoi, tam_nhin, sai_so_dich, buoc_nhin_xa_huong
+#     )
 
-    # 2. GỌI HÀM TÍNH TOÁN ĐIỀU HƯỚNG
-    reached, diem_A, diem_B, diem_Sau_A, goc_target, sai_so = calculate_agv_guidance(
-        toa_do_agv, huong_hien_tai_rad, diem_dau, diem_kiem_soat, diem_cuoi, tam_nhin, sai_so_dich, buoc_nhin_xa_huong
-    )
-
-    if reached:
-        print(f"AGV đã đến đích. Dừng xe.")
-    else:
-        print(f"--- KẾT QUẢ ĐIỀU KHIỂN ---")
-        print(f"Tọa độ AGV: {toa_do_agv}")
-        print(f"Điểm mục tiêu A: {diem_A}")
-        print(f"Điểm hướng mục tiêu (phía trước A): {diem_Sau_A}")
-        print(f"Góc mục tiêu: {math.degrees(goc_target):.2f}°")
-        print(f"Giải thích: Đoạn thẳng nối từ A đến Điểm B hợp với Ox {math.degrees(goc_target):.2f}°")
-        print(f"Sai số góc cần quay: {math.degrees(sai_so):.2f}°")
+#     if reached:
+#         print(f"AGV đã đến đích. Dừng xe.")
+#     else:
+#         print(f"--- KẾT QUẢ ĐIỀU KHIỂN ---")
+#         print(f"Tọa độ AGV: {toa_do_agv}")
+#         print(f"Điểm mục tiêu A: {diem_A}")
+#         print(f"Điểm hướng mục tiêu (phía trước A): {diem_Sau_A}")
+#         print(f"Góc mục tiêu: {math.degrees(goc_target):.2f}°")
+#         print(f"Giải thích: Đoạn thẳng nối từ A đến Điểm B hợp với Ox {math.degrees(goc_target):.2f}°")
+#         print(f"Sai số góc cần quay: {math.degrees(sai_so):.2f}°")

@@ -300,9 +300,9 @@
                     <div class="code-help">
                         <h4 onclick="toggleCodeHelp()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
                             <span><i class="fa-solid fa-circle-info"></i> Hướng dẫn cú pháp</span>
-                            <i id="help-toggle-icon" class="fa-solid fa-chevron-up"></i>
+                            <i id="help-toggle-icon" class="fa-solid fa-chevron-down"></i>
                         </h4>
-                        <div id="help-content" class="help-grid">
+                        <div id="help-content" class="help-grid" style="display: none;">
                             <div class="help-col">
                                 <strong>Đầu vào (Conditions):</strong>
                                 <ul>
@@ -357,19 +357,19 @@
                             <div class="radio-group">
                                 <label class="radio-label">
                                     <input type="radio" name="control-mode" value="auto" 
-                                           {{ 'checked' if not config.dieu_khien_agv.dieu_khien_thu_cong }} 
+                                           {{ 'checked' if not config.dieu_khien_thu_cong.dieu_khien_thu_cong }} 
                                            onchange="setControlMode(false)">
                                     <span>Tự động</span>
                                 </label>
                                 <label class="radio-label">
                                     <input type="radio" name="control-mode" value="manual" 
-                                           {{ 'checked' if config.dieu_khien_agv.dieu_khien_thu_cong }}
+                                           {{ 'checked' if config.dieu_khien_thu_cong.dieu_khien_thu_cong }}
                                            onchange="setControlMode(true)">
                                     <span>Thủ công</span>
                                 </label>
                             </div>
 
-                            <div id="manual-control-pad" class="control-pad" style="{{ 'display: flex;' if config.dieu_khien_agv.dieu_khien_thu_cong else 'display: none;' }}">
+                            <div id="manual-control-pad" class="control-pad" style="{{ 'display: flex;' if config.dieu_khien_thu_cong.dieu_khien_thu_cong else 'display: none;' }}">
                                 <div class="pad-row">
                                     <button class="pad-btn" id="ctrl-tien" onmousedown="updateDirection('tien', 1)" onmouseup="updateDirection('tien', 0)" onmouseleave="updateDirection('tien', 0)"><i class="fa-solid fa-caret-up"></i></button>
                                 </div>
@@ -658,7 +658,7 @@
         window.mapWidth = {{ config.w_pixel }};
         window.mapHeight = {{ config.h_pixel }};
         window.mappingUpdateSize = {{ config.kich_thuoc_mapping_update | tojson }};
-        window.initialManualControl = {{ config.dieu_khien_agv | tojson }};
+        window.initialManualControl = {{ config.dieu_khien_thu_cong | tojson }};
         window.thoiGianCapNhat = {{ config.thoi_gian_cap_nhat | tojson }};
         window.isCharging = {{ config.sac_pin | tojson }};
         window.currentRunState = {{ config.run_state | tojson }};
