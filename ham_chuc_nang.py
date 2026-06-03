@@ -53,6 +53,8 @@ class du_lieu_lidar_scan:
             check_1 = False
             check_2 = False
         scan_1 = np.array(scan_1)
+        # scan_2 = np.array([])
+        # check_2 = check_1
         scan_2 = np.array(scan_2)
         return scan_1, scan_2, check_1, check_2
     def mix_data_lidar(self, ten_lidar, huong_agv_khong_icp, lidar1_orient_deg, lidar2_orient_deg, chieu_ngang_xe, chieu_doc_xe, scaling_factor = 1):

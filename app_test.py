@@ -13,14 +13,16 @@ from datetime import datetime
 import json
 import process
 import ast
+import math
 from them_1_ma_apriltag import generate_single_tag
+
 
 PATH_DATA_IN_OUT = config.PATH_PHAN_MEM + "/data_input_output"
 
 
 # Khởi tạo ứng dụng Flask
 # template_folder: nơi chứa file html (templates)
-# static_folder: nơi chứa css, js, images (static)
+# static_folder: nơi chứa css, js, images (static) requests
 app = Flask(__name__)
 
 # Nạp cấu hình (nếu cần dùng app.config['KEY'])
@@ -77,6 +79,10 @@ def map_tile(level, x, y, size):
     if factor > 1 and tile.size > 0:
         tile = cv2.resize(tile, (size, size), interpolation=cv2.INTER_NEAREST)
 
+    # Kiểm tra nếu tile rỗng trước khi encode để tránh lỗi OpenCV
+    if tile is None or tile.size == 0:
+        return "Tile not found", 404
+
     # Sử dụng JPEG chất lượng 80 để tối ưu tốc độ truyền tải
     is_success, buffer = cv2.imencode(".jpg", tile, [cv2.IMWRITE_JPEG_QUALITY, 80])
     if is_success:
@@ -106,12 +112,45 @@ def map_region():
     
     # Cắt vùng ảnh từ bản đồ gốc trong bộ nhớ
     crop = AGVConfig.img_mapping[y1:y2, x1:x2]
-    
-    is_success, buffer = cv2.imencode(".jpg", crop, [cv2.IMWRITE_JPEG_QUALITY, 50])
+    # print(type(crop), crop.shape)
+    if crop.shape[0] != 0:
+        is_success, buffer = cv2.imencode(".jpg", crop, [cv2.IMWRITE_JPEG_QUALITY, 50])
+        if is_success:
+            response = Response(buffer.tobytes(), mimetype='image/jpeg')
+            return response
+    return "Crop error", 404
+
+@app.route('/api/camera_image')
+def camera_image():
+    """
+    API trả về ảnh camera hiện tại. 
+    Thu nhỏ và nén chất lượng để tiết kiệm tài nguyên mạng.
+    """
+    frame = AGVConfig.img_camera
+    # Thu nhỏ ảnh xuống chiều rộng 320px để làm ảnh nhỏ (PIP)
+    h, w = frame.shape[:2]
+    target_w = 320
+    target_h = int(h * (target_w / w))
+    resized_frame = cv2.resize(frame, (target_w, target_h), interpolation=cv2.INTER_AREA)
+
+    is_success, buffer = cv2.imencode(".jpg", resized_frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
     if is_success:
         response = Response(buffer.tobytes(), mimetype='image/jpeg')
         return response
-    return "Crop error", 404
+    return "Error", 500
+
+@app.route('/api/set_camera_display_mode', methods=['POST'])
+def set_camera_display_mode():
+    """
+    API để cập nhật trạng thái hiển thị camera (off, on, auto).
+    """
+    data = request.json
+    new_mode = data.get('mode')
+    if new_mode in ["off", "on", "auto"]:
+        AGVConfig.trang_thai_hien_thi_img = new_mode
+        AGVConfig.save_to_file() # Lưu ngay vào last_config.json
+        return jsonify({"status": "success", "new_mode": new_mode})
+    return jsonify({"status": "error", "message": "Chế độ không hợp lệ"}), 400
 
 @app.route('/api/status')
 def get_status():
@@ -120,6 +159,7 @@ def get_status():
     """
     # Cập nhật tọa độ pixel của các vùng chân xe theo vị trí AGV hiện tại trước khi gửi đi
     AGVConfig.update_pixel_exclusion_zones()
+
     return jsonify({
         "phan_tram_pin": AGVConfig.phan_tram_pin,
         "run_state": AGVConfig.run_state,
@@ -138,9 +178,11 @@ def get_status():
         "hien_thi_chan_xe": AGVConfig.hien_thi_chan_xe,
         "lidar1": AGVConfig.lidar1,
         "lidar2": AGVConfig.lidar2,
+        "ten_script_dang_chay": AGVConfig.ten_script_dang_chay, # Thêm thông tin này
         "esp32": AGVConfig.esp32,
         "driver_motor": AGVConfig.driver_motor,
         "pin": AGVConfig.pin,
+        "camera": AGVConfig.camera, # Thêm camera vào response
         "che_do_tao_ban_do": AGVConfig.che_do_tao_ban_do,
         "tao_ban_do_moi": AGVConfig.tao_ban_do_moi,
         "chinh_sua_ban_do": AGVConfig.chinh_sua_ban_do,
@@ -150,6 +192,8 @@ def get_status():
         "update_all_point_in_map": AGVConfig.update_all_point_in_map,
         "tam_thoi_reset_vung_loai_bo": AGVConfig.tam_thoi_reset_vung_loai_bo,
         "cap_nhat_ban_do_1_lan_web": AGVConfig.cap_nhat_ban_do_1_lan_web,
+        "hien_thi_camera": AGVConfig.hien_thi_camera, # Gửi trạng thái hiển thị camera
+        "trang_thai_hien_thi_img": AGVConfig.trang_thai_hien_thi_img, # Gửi chế độ hiển thị camera
         "thoi_gian_cap_nhat": AGVConfig.thoi_gian_cap_nhat,
         "dieu_khien_thu_cong": AGVConfig.dieu_khien_thu_cong,
         "sac_pin": AGVConfig.sac_pin,
@@ -433,6 +477,7 @@ def activate_script():
         AGVConfig.noi_dung_script_dang_chay = ""
         AGVConfig.du_lieu_script_dang_chay = {}
         AGVConfig.bien_nho_code = {}
+        AGVConfig.save_to_file() # Lưu trạng thái không chạy script
         return jsonify({"status": "success", "active": ""})
 
     file_path = os.path.join(config.path_folder_scripts, f"{name}.json")
@@ -443,6 +488,7 @@ def activate_script():
         AGVConfig.ten_script_dang_chay = name
         AGVConfig.noi_dung_script_dang_chay = data.get('content', '')
         AGVConfig.du_lieu_script_dang_chay = data
+        AGVConfig.save_to_file() # Lưu trạng thái script đang chạy
         return jsonify({"status": "success", "active": name})
     return jsonify({"status": "error", "message": "Không tìm thấy file"}), 404
 
@@ -542,6 +588,9 @@ def run_script_interpreter():
     AGVConfig.kc_an_toan_sau_code = None
     AGVConfig.kc_an_toan_ben_canh_code = None
     AGVConfig.data_vung_loai_bo_code = None
+    AGVConfig.tim_apriltag_diem_tiep_theo_code = False
+    AGVConfig.check_apriltag_code = {"id": None, "vi_tri": [], "xoay_goc": None, "mode": None, "sai_so_goc": None}
+
 
     try:
         # 2. Định nghĩa các hàm "Đầu ra" (Actions) cho người dùng
@@ -606,11 +655,23 @@ def run_script_interpreter():
                         script_content = data.get('content', '')
                         # Thực thi script con với cùng môi trường safe_env
                         if script_content:
-                            exec(script_content, {"__builtins__": {}}, safe_env)
+                            exec(script_content, safe_env)
                 except Exception as e:
                     print(f"Lỗi khi thực thi script con '{name}': {e}")
             else:
                 print(f"Cảnh báo: Không tìm thấy script '{name}' để chạy.")
+
+        def check_apriltag(id = None, vi_tri = [], xoay_goc = None, mode = None, sai_so_goc = None):
+            AGVConfig.check_apriltag_code = {"id": id, "vi_tri": vi_tri, "xoay_goc": xoay_goc, "mode": mode, "sai_so_goc": sai_so_goc}
+        def tim_apriltag_diem_tiep_theo():
+            AGVConfig.tim_apriltag_diem_tiep_theo_code = True # chỉ cần điểm vừa đi qua và điểm tiếp theo phù hợp thì sẽ là True
+
+
+
+
+
+
+
         # 3. Thiết lập môi trường "An toàn" (Sandbox)
         # Chúng ta chỉ cho phép script truy cập vào các hàm và biến ta chỉ định
         safe_env = {
@@ -626,12 +687,15 @@ def run_script_interpreter():
             'da_den_diem_tiep_theo': AGVConfig.da_den_diem_tiep_theo_code,
             'van_toc_trai': AGVConfig.van_toc_phan_hoi_trai,
             'van_toc_phai': AGVConfig.van_toc_phan_hoi_phai,
+            'toa_do_agv': AGVConfig.toa_do_agv_mm,
             'goc_agv': AGVConfig.huong_agv_do_img,
             'danh_sach_duong_di': AGVConfig.danh_sach_duong_di_code,
             'bien_nho': AGVConfig.bien_nho_code,
             'dang_re': AGVConfig.dang_re_code,
             'di_thuan_nguoc': AGVConfig.di_thuan_nguoc_code,
             'stop_resume': AGVConfig.stop_code_resume,
+            'da_hoan_thanh_apriltag': AGVConfig.da_hoan_thanh_apriltag_code,
+
             
             # Các hàm "Đầu ra" (Commands)
             'nang_ha_xe': nang_ha_xe,
@@ -644,6 +708,9 @@ def run_script_interpreter():
             'set_khoang_cach_an_toan': set_khoang_cach_an_toan,
             'vung_loai_bo': vung_loai_bo,
             'chay_script': chay_script,
+            'check_apriltag': check_apriltag,
+            'tim_apriltag_diem_tiep_theo': tim_apriltag_diem_tiep_theo,
+            
             
             # Các hàm thư viện cơ bản
             'range': range,
@@ -651,31 +718,45 @@ def run_script_interpreter():
             'int': int,
             'str': str,
             'len': len,
-            'list': list
+            'list': list,
+            'float': float,
+            'tuple': tuple,
+            'dict': dict,
+            'set': set,
+            'bool': bool,
+            'max': max,
+            'min': min,
+            'sum': sum,
+            'abs': abs,
+            'math': math,
+            'round': round,
+            'np': np,
+            '__builtins__': {},
         }
 
         # 4. Thực thi kịch bản (Execution)
         # exec() sẽ chạy toàn bộ code Python của người dùng trong môi trường safe_env
-        exec(AGVConfig.noi_dung_script_dang_chay, {"__builtins__": {}}, safe_env)
+        exec(AGVConfig.noi_dung_script_dang_chay, safe_env)
 
     except Exception as e:
         # Nếu code người dùng gõ sai logic (chia cho 0, gọi hàm không tồn tại...)
         # ta bắt lỗi ở đây để không làm sập toàn bộ app.py
         print(f"Lỗi logic trong script '{AGVConfig.ten_script_dang_chay}': {e}")
     # print("AGVConfig.bien_nho_code", AGVConfig.bien_nho_code)
-    if len(AGVConfig.bien_nho_code["van_toc_tien_max"]) == 0:
-        AGVConfig.van_toc_tien_max_code = None
-    elif len(AGVConfig.bien_nho_code["van_toc_tien_max"]) == 1:
-        AGVConfig.van_toc_tien_max_code = AGVConfig.bien_nho_code["van_toc_tien_max"][0]
-    else:
-        AGVConfig.van_toc_tien_max_code = min(AGVConfig.bien_nho_code["van_toc_tien_max"])
-
-    if len(AGVConfig.bien_nho_code["van_toc_re_max"]) == 0:
-        AGVConfig.van_toc_re_max_code = None
-    elif len(AGVConfig.bien_nho_code["van_toc_re_max"]) == 1:
-        AGVConfig.van_toc_re_max_code = AGVConfig.bien_nho_code["van_toc_re_max"][0]
-    else:
-        AGVConfig.van_toc_re_max_code = min(AGVConfig.bien_nho_code["van_toc_re_max"])
+    if "van_toc_tien_max" in AGVConfig.bien_nho_code:
+        if len(AGVConfig.bien_nho_code["van_toc_tien_max"]) == 0:
+            AGVConfig.van_toc_tien_max_code = None
+        elif len(AGVConfig.bien_nho_code["van_toc_tien_max"]) == 1:
+            AGVConfig.van_toc_tien_max_code = AGVConfig.bien_nho_code["van_toc_tien_max"][0]
+        else:
+            AGVConfig.van_toc_tien_max_code = min(AGVConfig.bien_nho_code["van_toc_tien_max"])
+    if "van_toc_re_max" in AGVConfig.bien_nho_code:
+        if len(AGVConfig.bien_nho_code["van_toc_re_max"]) == 0:
+            AGVConfig.van_toc_re_max_code = None
+        elif len(AGVConfig.bien_nho_code["van_toc_re_max"]) == 1:
+            AGVConfig.van_toc_re_max_code = AGVConfig.bien_nho_code["van_toc_re_max"][0]
+        else:
+            AGVConfig.van_toc_re_max_code = min(AGVConfig.bien_nho_code["van_toc_re_max"])
 
 
     error_tab_code = False
@@ -766,10 +847,12 @@ def pc_sent_agv_endpoint():
         tin_hieu_nhan = data
         # cập nhật các thông tin cần thiết'
         AGVConfig.AGV_STATES[AGVConfig.name_agv]["dieu_khien_agv"] = tin_hieu_nhan[AGVConfig.name_agv]["dieu_khien_agv"]
+        # print("AGVConfig.AGV_STAT 000000000", AGVConfig.AGV_STATES[AGVConfig.name_agv]["dieu_khien_agv"])
     
         cap_nhat_thong_tin_agv() # cập nhật các thông tin khác của AGV nếu cần thiết
         tin_hieu_gui = AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]
-        # print("tin_hieu_gui", tin_hieu_gui)
+        # print("00000000000000000", tin_hieu_gui)
+
         log_communication("nhan", thoi_gian_nhan_str, tin_hieu_nhan)
         log_communication("gui", thoi_gian_nhan_str, tin_hieu_gui)
         return jsonify({"status": "success", "data": tin_hieu_gui}), 200
@@ -971,7 +1054,7 @@ def icp_simulation_loop(handler):
     global _last_che_do_tao_ban_do, time_tat_phan_mem, t
     
     while True:
-        # vi_tri_hien_tai_code = "X1" # Tên điểm hiện tại (string)
+        # vi_tri_hien_tai_code = "X1" # Tên điểm hiện tại (string) http://192.168.11.18:5001/PC_sent_AGV
         # vi_tri_tiep_theo_code = "W1" # Tên điểm tiếp theo (string)
         # vi_tri_diem_cuoi = "G21" # Tên điểm cuối cùng đã đi qua (string)
         # danh_sach_duong_di_code = ["X1", "W1", "G21"] # Danh sách đường đi (danh_sach_duong_di) mà AGV sẽ đi qua, để script có thể truy cập khi cần
@@ -988,6 +1071,7 @@ def icp_simulation_loop(handler):
             if time_tat_phan_mem == 0:
                 time_tat_phan_mem = time.time()
             else:
+                
                 if time.time() - time_tat_phan_mem > 4:
                     print("Yêu cầu tắt hệ thống nhận được. Đang đóng Web Server và các tiến trình...")
                     os._exit(0) # Thoát toàn bộ chương trình ngay lập tức

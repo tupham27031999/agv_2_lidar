@@ -1,0 +1,72 @@
+1. giải nén
+2. cd đến folder giải nén
+3. chmod +x SentechSDK-1.2.2-Linux64-x64-install.run
+4. sudo ./SentechSDK-1.2.2-Linux64-x64-install.run
+5. nano ~/.bashrc
+6. 
+export PATH=$PATH:/opt/sentech/bin
+export LD_LIBRARY_PATH=/opt/sentech/lib:/opt/sentech/lib/GenICam:$LD_LIBRARY_PATH
+export GENICAM_GENTL64_PATH=/opt/sentech/lib:$GENICAM_GENTL64_PATH
+
+Lưu lại bằng cách nhấn Ctrl + O, nhấn Enter, sau đó thoát bằng Ctrl + X.
+7. source ~/.bashrc
+8. 
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+9. StViewer
+10.
+sudo apt update
+sudo apt install v4l-utils
+v4l2-ctl --list-devices
+
+------------------------------------------------ cài python 3.11.3 vào /usr/bin....
+
+Bước 1: cài dependency
+sudo apt update
+sudo apt install build-essential libssl-dev zlib1g-dev \
+libncurses5-dev libncursesw5-dev libreadline-dev libsqlite3-dev \
+libgdbm-dev libdb5.3-dev libbz2-dev libexpat1-dev liblzma-dev tk-dev
+
+Bước 2: tải Python 3.11.3
+cd ~
+wget https://www.python.org/ftp/python/3.11.3/Python-3.11.3.tgz
+tar -xvf Python-3.11.3.tgz
+cd Python-3.11.3
+
+Bước 3: build đúng cách (QUAN TRỌNG)
+./configure --enable-shared
+make -j8
+sudo make install
+
+
+Bước 4: kiểm tra
+find /usr/local -name "libpython3.11.so*"
+
+👉 phải thấy:
+
+/usr/local/lib/libpython3.11.so.1.0
+
+
+
+Bước 5: fix linker
+export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+
+👉 thêm vào .bashrc:
+
+echo 'export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH' >> ~/.bashrc
+source ~/.bashrc
+
+
+Bước 6: test lại Harvester
+python3.11 -c "from harvesters.core import Harvester; print('OK')"
+--> OK
+
+Bước 7:
+echo "/usr/local/lib" | sudo tee /etc/ld.so.conf.d/python3.11.conf
+sudo ldconfig
+
+Bước 8: tìm đường dẫn để thay thế nếu chạy phần mềm bị sai đường dẫn
+find /opt -name "libstgentl.cti"
+
+(((tupn@tupn-iEP-7030E:~/agv/code/cc$ find /opt -name "libstgentl.cti"
+/opt/sentech/lib/libstgentl.cti)))

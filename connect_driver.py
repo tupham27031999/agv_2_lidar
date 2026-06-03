@@ -622,6 +622,10 @@ class sent_data_driver:
                             
                             if v_tien_max > v_max_trai_phai + gia_toc_tien:
                                 v_tien_max = v_max_trai_phai + gia_toc_tien
+
+                            if distance < 200:
+                                v_tien_max = min(v_tien_max, 1000)
+                                
                         else:
                             # tăng tốc
                             v_tien_max = min((v_max_trai_phai + gia_toc_tien), v_tien_max0)
@@ -634,15 +638,22 @@ class sent_data_driver:
                     v_re_max = v_re_max0
                     min_angle = 500
                     gia_toc_re = 700
+                    goc1 = 5
+                    goc2 = 15
                     # tăng hoặc giảm tốc độ góc
-                    if abs(angle) <= 5:
+                    if abs(angle) <= goc1:
                         min_angle = 400
-                    if abs(angle) <= 15:
+                    # check_apriltag_code = {"id": None, "vi_tri": [], "xoay_goc": None, "mode": None, "sai_so_goc": None}
+                    if AGVConfig.check_apriltag_code["id"] is not None:
+                        goc1 = 15
+                        goc2 = 30
+                        min_angle = 300
+                    if abs(angle) <= goc2:
                         # giảm tốc
                         v_re_1 = max((v_max_trai_phai - gia_toc_re), min_angle)
                         # v_re_2 = v_re_1
                         # if abs(angle) < 20:
-                        v_re_2 = max((v_re_max * (abs(angle) / 15)), min_angle)
+                        v_re_2 = max((v_re_max * (abs(angle) / goc2)), min_angle)
                         v_re_max = min(v_re_1, v_re_2)
                     else:
                         # tăng tốc
@@ -813,7 +824,7 @@ class sent_data_driver:
                 #     print("--------@@@@@@@@@@@@---",self.van_toc_gui_driver_trai, self.van_toc_gui_driver_phai, int(van_toc_gui_driver_trai), int(van_toc_gui_driver_phai))
                 self.set_rpm(int(van_toc_gui_driver_trai), int(van_toc_gui_driver_phai))
                 # print(" -------------- van_toc_gui_driver_trai ------------", van_toc_gui_driver_trai, van_toc_gui_driver_phai)
-            time.sleep(0.1)
+            time.sleep(0.08)
     def check_connect(self):
         self.check_time = time.time()
 

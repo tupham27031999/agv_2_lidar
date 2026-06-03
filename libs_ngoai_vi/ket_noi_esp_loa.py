@@ -23,6 +23,7 @@ remove.remove_all_folder_in_folder(path_esp_sent_py)
 gui_off_24v_thanh_cong = 0
 gui_bat_loa_thanh_cong = 0
 gui_nang_ha_thanh_cong = 0
+gui_bat_tat_den_thanh_cong = ""
 gui_nha_phanh_thanh_cong = 0
 dung_hoat_dong = 0
 loi_motor_nang_ha = 0
@@ -81,9 +82,11 @@ class Python_Esp:
         self.gui_off_24v_thanh_cong = 0
         self.gui_bat_loa_thanh_cong = 0
         self.gui_nang_ha_thanh_cong = 0
+        self.gui_bat_tat_den_thanh_cong = ""
         self.gui_nha_phanh_thanh_cong = 0
         self.dung_hoat_dong = 0
         self.nang_ha = ""
+        self.bat_tat_den = ""
         self.loi_motor_nang_ha = 0
 
         self.reset_5s = False
@@ -182,6 +185,11 @@ class Python_Esp:
                 self.gui_nang_ha_thanh_cong = command_info.split(':', 1)[1]
             except IndexError:
                 print(f"Cảnh báo: Lệnh 'nang_ha' không đúng định dạng: {command_info}")
+        elif command_info.startswith("bat_tat_den") and ":" in command_info:
+            try:
+                self.gui_bat_tat_den_thanh_cong = command_info.split(':', 1)[1]
+            except IndexError:
+                print(f"Cảnh báo: Lệnh 'bat_tat_den' không đúng định dạng: {command_info}")
         elif command_info.startswith("loai_bo_phanh_xe") and ":" in command_info:
             self.gui_nha_phanh_thanh_cong = command_info.split(':', 1)[1]
 
@@ -205,6 +213,9 @@ class Python_Esp:
     def _internal_send(self, command_to_send, log_prefix="sent_data"):
         """Hàm nội bộ để định dạng và gửi lệnh qua serial, tránh lặp code."""
         try:
+            data_to_send = "bat_tat_den#tat#0""#0\r\n"
+            self.serial.write(data_to_send.encode())
+            time.sleep(0.1)
             dung_hoat_dong_str = "dung_hoat_dong_1" if self.dung_hoat_dong == 1 else "dung_hoat_dong_0"
             data_to_send = f"{command_to_send}#{dung_hoat_dong_str}#0\r\n"
             self.serial.write(data_to_send.encode())
@@ -286,8 +297,14 @@ def esp_sent_py(input_esp):
 def check_connect():
     global check_time
     check_time = time.time()
+    # # test camera
+    # if  AGVConfig.tat_phan_mem == True:
+    #     py_sent_esp("bat_tat_den#tat#0")
+    # else:
+    #     py_sent_esp("bat_tat_den#bat#0")
+    #     pass
 def python_esp32():
-    global sent_data,sent_data_new, connected, input_esp, check_connect_esp, gui_off_24v_thanh_cong, gui_bat_loa_thanh_cong, connect_esp
+    global sent_data,sent_data_new, connected, input_esp, check_connect_esp, gui_off_24v_thanh_cong, gui_bat_loa_thanh_cong, connect_esp, gui_bat_tat_den_thanh_cong
     global gui_nha_phanh_thanh_cong, gui_nang_ha_thanh_cong, dung_hoat_dong, loi_motor_nang_ha, reset_5s
     
     py_esp = Python_Esp()
@@ -298,6 +315,7 @@ def python_esp32():
         gui_bat_loa_thanh_cong = py_esp.gui_bat_loa_thanh_cong
         gui_nha_phanh_thanh_cong = py_esp.gui_nha_phanh_thanh_cong
         gui_nang_ha_thanh_cong = py_esp.gui_nang_ha_thanh_cong
+        gui_bat_tat_den_thanh_cong = py_esp.gui_bat_tat_den_thanh_cong
         dung_hoat_dong = py_esp.dung_hoat_dong
         loi_motor_nang_ha = py_esp.loi_motor_nang_ha    
 
@@ -318,7 +336,8 @@ def python_esp32():
         
 
         check_connect_esp = py_esp.connected
-        if check_time != 0 and time.time() - check_time > 2:
+        if check_time != 0 and time.time() - check_time > 3:
+            # py_sent_esp("bat_tat_den#tat#0")
             py_esp.close_serial()
             print("------- tắt kết nối esp32 --------")
             connect_esp = 0

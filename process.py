@@ -8,6 +8,7 @@ import ham_chuc_nang
 from libs_lidar import scan_an_toan, driver_control_input, detect_gicp
 from ham_logic import angle_and_distance as ad 
 import connect_driver
+from libs_ngoai_vi import agv_camera
 
 
 
@@ -42,6 +43,19 @@ class xu_ly_du_lieu_lidar:
         self.def_scan = ham_chuc_nang.def_scan()
         self.driver_motor = connect_driver.sent_data_driver()
         self.thiet_bi_ngoai_vi = ham_chuc_nang.Loa_pin_music_esp32()
+        # khởi tạo camera
+        if AGVConfig.thiet_lap_ket_noi["camera"] == "on":
+            thong_tin_cac_camera = agv_camera.list_sentech_cameras()
+            for camera in thong_tin_cac_camera:
+                if camera["Index"] == AGVConfig.camera["usb_camera_index"]:
+                    AGVConfig.camera["ket_noi"] = True
+                    AGVConfig.camera["message"] = "Connected"
+                    AGVConfig.camera["Model"] = camera["Model"]
+                    break
+            self.camera_apriltag = agv_camera.AGVCamera(src=0).start()
+        else:
+            self.camera_apriltag = None
+        
 
         load_path = None
         map_to_load = AGVConfig.ten_ban_do
@@ -54,8 +68,56 @@ class xu_ly_du_lieu_lidar:
         self.detect_gicp_lidar = detect_gicp.FastLidarMapper(load_from_path=load_path)
         
     
-
     def loop(self):
+        # tag_info.append({
+        #             "id": int(current_ids[i][0]),
+        #             "lech_trai_phai_mm_x": round(float(mm_x), 1),    # Lệch ngang (mm)
+        #             "lech_truoc_sau_mm_y": round(float(mm_y), 1),    # Lệch dọc (mm)
+        #             "goc_lech_do": round(float(angle), 2),           # Góc lệch (độ)
+        #             "toa_do_2d": current_corners[i].astype(int).tolist() # pixel
+        #         })
+        # thong_tin_cac_camera.append({"Index": i, 
+        #                              "Model": info.model, 
+        #                              "Serial": info.serial_number, 
+        #                              "Vendor": info.vendor})
+        # camera = {"ket_noi": False, "message": "Disconnect", "usb_camera_index": data_setting["cong_camera"], "Model": "None"}
+        # lấy dữ liệu apriltag
+        # if 
+        # AGVConfig.hien_thi_camera = AGVConfig.ton_tai_index_camera and (AGVConfig.trang_thai_hien_thi_img == "on" or AGVConfig.trang_thai_hien_thi_img == "auto")
+        if self.camera_apriltag is not None:
+            if AGVConfig.tat_phan_mem == True:
+                self.camera_apriltag.stop()
+            else:
+                if AGVConfig.camera["ket_noi"] == True:
+                    if AGVConfig.trang_thai_hien_thi_img == "on" or (AGVConfig.trang_thai_hien_thi_img == "auto" and AGVConfig.diem_tiep_theo_april_tag == True):
+                        AGVConfig.hien_thi_camera = True
+                    else:
+                        AGVConfig.hien_thi_camera = False
+                    # AGVConfig.hien_thi_camera = False
+                    img, info, fps, status = self.camera_apriltag.get_data(AGVConfig.hien_thi_camera)
+                    if status == False:
+                        if AGVConfig.camera["ket_noi"] == True:
+                            AGVConfig.camera["ket_noi"] = False
+                            AGVConfig.camera["message"] = "Disconnect"
+                            AGVConfig.camera["Model"] = "None"
+                    if img is not None:
+                        AGVConfig.img_camera = img
+                    if info is not None:
+                        AGVConfig.tag_info = info
+                        AGVConfig.april_tag_code = info
+                    if fps is not None:
+                        AGVConfig.fps_camera = fps
+
+                else:
+                    print("không có camera")
+                    thong_tin_cac_camera = agv_camera.list_sentech_cameras()
+                    for camera in thong_tin_cac_camera:
+                        if camera["Index"] == AGVConfig.camera["usb_camera_index"]:
+                            AGVConfig.camera["ket_noi"] = True
+                            AGVConfig.camera["message"] = "Connected"
+                            AGVConfig.camera["Model"] = camera["Model"]
+                            break
+
         # điều khiển bằng bàn phím 
         self.dk_ban_phim()
         self.thiet_bi_ngoai_vi.loop()
@@ -68,6 +130,7 @@ class xu_ly_du_lieu_lidar:
 
         if AGVConfig.dieu_khien_thu_cong["dieu_khien_thu_cong"] == False:
             AGVConfig_2.loi_an_toan, scan_an_toan = self.kiem_tra_an_toan_lidar(scan_xy, huong_agv_toa_do_xyz)
+            # print("vnvnv",  AGVConfig_2.loi_an_toan, scan_an_toan )
         else:
             AGVConfig_2.loi_an_toan = ""
             scan_an_toan = np.array([])
@@ -173,6 +236,8 @@ class xu_ly_du_lieu_lidar:
                 AGVConfig.huong_agv_do_img = ad.normalize_angle_360(int((np.pi/2 - goc_agv_rad) * 180 / np.pi)) # dùng để hiển thị góc agv trên web
                 goc_agv_driver_control = goc_agv_rad - np.pi/2 # chuyển góc về hệ tọa độ của driver_control_input tọa độ ảnh
                 goc_agv_driver_control = ad.normalize_rad(goc_agv_driver_control) # Chuẩn hóa một góc về khoảng [-180, 180] độ.
+                
+                # print("goc_agv_driver_control", int(goc_agv_driver_control*180/np.pi), int(AGVConfig.toa_do_agv_mm[0]), int(AGVConfig.toa_do_agv_mm[1]) )
 
                 
                 # print(f"AGVConfig.huong_agv_do_thuc_rad: {AGVConfig.huong_agv_do_thuc_rad}, \

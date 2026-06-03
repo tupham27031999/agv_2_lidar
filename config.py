@@ -81,7 +81,6 @@ path_folder_log_giao_tiep = remove.tao_folder(os.path.join(PATH_PHAN_MEM, "data_
 path_folder_upload = remove.tao_folder(os.path.join(PATH_PHAN_MEM, "update_phan_mem", "upload"))
 path_folder_dowload = remove.tao_folder(os.path.join(PATH_PHAN_MEM, "update_phan_mem", "download"))
 path_folder_scripts = remove.tao_folder(os.path.join(PATH_PHAN_MEM, "data_input_output", "scripts"))
-path_download_json = remove.tao_folder(os.path.join(PATH_PHAN_MEM, "update_phan_mem", "download.json"))
 path_backup = remove.tao_folder(os.path.join(PATH_PHAN_MEM, "data_backup"))
 path_ma_AprilTag = remove.tao_folder(os.path.join(PATH_PHAN_MEM, "data_input_output", "danh_sach_ma_AprilTag"))
 # C:\tupn\phan_mem\a_agv\code\cai_tien_web_agv\data_input_output\loai_bo_chan_xe
@@ -126,13 +125,15 @@ class AGVConfig:
     bien_nho_code = {} # Lưu trữ các biến tùy chỉnh của người dùng để so sánh giữa các vòng lặp
     error_tab_code = False
 
+    
+
     # input
     diem_vua_di_qua_code = "" # Tên điểm hiện tại (string)
     diem_tiep_theo_code = "" # Tên điểm tiếp theo (string)
     diem_cuoi_code = "" # Tên điểm cuối cùng đã đi qua (string)
     danh_sach_duong_di_code = [] # Danh sách đường đi (danh_sach_duong_di) mà AGV sẽ đi qua, để script có thể truy cập khi cần
     yeu_cau_gui_agv_code = "" # 'cho_lenh', 'lay_linh_kien', 'lay_xe_linh_kien', 'error' # chưa setup
-    april_tag_code = None # ID thẻ quét được (int) # chưa setup
+    april_tag_code = [] # ID thẻ quét được (int) # chưa setup
     xy_lanh_code = "" # 'nang' hoặc 'ha'
     khoang_cach_den_diem_cuoi_code = None # mm
     khoang_cach_den_diem_tiep_theo_code = None # mm
@@ -141,6 +142,7 @@ class AGVConfig:
     van_toc_phan_hoi_phai = 0
     dang_re_code = False
     di_thuan_nguoc_code = "thuan"
+    da_hoan_thanh_apriltag_code = None
 
     # output
     nang_ha_xe_code = None # Lưu trạng thái nâng hạ xe ('nang', 'ha', None)
@@ -154,8 +156,16 @@ class AGVConfig:
     kc_an_toan_sau_code = None
     kc_an_toan_ben_canh_code = None
     data_vung_loai_bo_code = None
+    tim_apriltag_diem_tiep_theo_code = False
+    check_apriltag_code = {"id": None, "vi_tri": [], "xoay_goc": None, "mode": None, "sai_so_goc": None} # {"vi_tri" = []/[x, y], "su_dung_xoay_goc" = None/độ}
+    cap_nhat_vi_tri_apriltag = {"id": None, "vi_tri": [], "goc_agv": None}
+    
 
-
+    # "id": int(current_ids[i][0]),
+        #             "lech_trai_phai_mm_x": round(float(mm_x), 1),    # Lệch ngang (mm)
+        #             "lech_truoc_sau_mm_y": round(float(mm_y), 1),    # Lệch dọc (mm)
+        #             "goc_lech_do": round(float(angle), 2),           # Góc lệch (độ)
+        #             "toa_do_2d
     # Cấu hình nội dung hướng dẫn trên giao diện Web (Linh hoạt)
     huong_dan_code = {
         "dau_vao": [
@@ -163,24 +173,29 @@ class AGVConfig:
             ("diem_tiep_theo", "Tên điểm tiếp theo (string)"),
             ("diem_cuoi", "Tên điểm cuối cùng agv cần đi đến (string)"),
             ("yeu_cau_gui_agv", "'cho_lenh', 'lay_hang', 'tra_hang', 'error'"),
-            ("april_tag", "ID thẻ quét được (int)"),
+            ("april_tag", "[{id, lech_trai_phai_mm_y, lech_truoc_sau_mm_x, goc_lech_do, toa_do_2d}, ...]"),
             ("xy_lanh", "'nang' hoặc 'ha'"),
             ("khoang_cach_den_diem_cuoi", "Khoảng cách đến điểm cuối cùng (mm)"),
             ("khoang_cach_den_diem_tiep_theo", "Khoảng cách đến điểm tiếp theo (mm)"),
             ("da_den_diem_tiep_theo", "Đã đến điểm tiếp theo (True/False)"),
             ("van_toc_trai", "Vận tốc phản hồi bánh trái (mm/s)"),
             ("van_toc_phai", "Vận tốc phản hồi bánh phải (mm/s)"),
-            ("goc_agv", "Góc quay của AGV so với Ox (độ)"),
+            ("toa_do_agv", "Tọa độ AGV trên bản đồ (mm)"),
+            ("goc_agv", "Góc quay của AGV so với Ox (độ) [0: 360]"),
             ("danh_sach_duong_di", "Danh sách các điểm trong lộ trình (list)"),
             ("dang_re", "Đang rẽ (True/False)"),
             ("di_thuan_nguoc", "di chuyển thuận ngược 2 chiều (string: thuan hoặc nguoc)"),
-            ("stop_resume", "agv đã nhận lệnh dừng cho_lenh() hay chưa (True/False)")
+            ("stop_resume", "agv đã nhận lệnh dừng cho_lenh() hay chưa (True/False)"),
+            ("da_hoan_thanh_apriltag", "id / None")
+
         ],
         "dau_ra": [
             ("hàm chức năng", "các chức năng sau 1 vòng không có script gọi tự về mặc định"),
             ("nang_ha_xe(trang_thai)", "Ra lệnh nâng hạ (trang_thai: 'nang', 'ha')"),
             ("bam_coi(name)", "Bật nhạc theo tên"),
             ("stop()", "Tạm dừng"),
+            ("tim_apriltag_diem_tiep_theo()", "sau khi đến điểm tiếp theo cần có mã apriltag"),
+            ("check_apriltag(id = None, vi_tri = [], xoay_goc: None, mode: None, sai_so_goc: None)", "tùy chọn"),
             ("print(msg)", "Ghi log ra màn hình console"),
             ("cho_lenh()", "Dừng xe đợi gọi API: /api/code/resume"),
             ("xoay_goc(ang, mode)", "Xoay (mode 0: thân xe, 1: đầu xe) hợp với Ox theo góc ang (độ)"),
@@ -276,8 +291,7 @@ class AGVConfig:
     kich_thuoc_agv = [40,20] # pixel, dùng để vẽ hình chữ nhật đại diện cho AGV trên bản đồ
     kich_thuoc_mapping_update = [1000,1000]
     
-
-    toa_do_agv_mm = [3000, 5000]
+    toa_do_agv_mm = [0, 0]
     huong_agv_do_thuc_rad = np.radians(60)
 
     danh_sach_tien_max = [10000, 9000, 8500, 8000, 7000, 6500, 6000, 5500, 5000, 4500, 4000, 3500, 3000, 2500, 2000, 1500, 1000, 500]
@@ -318,6 +332,9 @@ class AGVConfig:
     ten_danh_sach_duong = _saved.get("ten_danh_sach_duong", "")
     if ten_danh_sach_duong not in danh_sach_folder_duong: ten_danh_sach_duong = ""
     print("ten_danh_sach_duong", ten_danh_sach_duong)
+    
+    # Nạp tên script đã chạy lần trước từ bộ nhớ
+    ten_script_dang_chay_last = _saved.get("ten_script_dang_chay", "")
 
     van_toc_tien_max = _saved.get("van_toc_tien_max", 3000)
     van_toc_re_max = _saved.get("van_toc_re_max", 200)
@@ -335,7 +352,7 @@ class AGVConfig:
     h_pixel,w_pixel,_ = img.shape
 
 
-
+    ten_script_dang_chay = ten_script_dang_chay_last
     @classmethod
     def reload_map(cls):
         """Tải lại dữ liệu ảnh bản đồ từ ten_ban_do hiện tại"""
@@ -390,7 +407,9 @@ class AGVConfig:
             "ten_danh_sach_duong": cls.ten_danh_sach_duong,
             "van_toc_tien_max": cls.van_toc_tien_max,
             "van_toc_re_max": cls.van_toc_re_max,
-            "ten_vung_loai_bo": cls.loai_bo_coc_xe["ten_vung_loai_bo"]
+            "ten_vung_loai_bo": cls.loai_bo_coc_xe["ten_vung_loai_bo"],
+            "ten_script_dang_chay": cls.ten_script_dang_chay, # Lưu script đang chạy
+            "trang_thai_hien_thi_img": cls.trang_thai_hien_thi_img # Lưu trạng thái camera
         }
         os.makedirs(os.path.dirname(cls.path_last_config), exist_ok=True)
         with open(cls.path_last_config, 'w') as f:
@@ -512,11 +531,25 @@ class AGVConfig:
         cls.update_danh_sach_duong()
         cls.ten_danh_sach_duong = name
         cls.save_to_file()
+        
+    @classmethod
+    def load_active_script(cls):
+        """Tải nội dung script đang được chỉ định chạy từ lần trước"""
+        if not cls.ten_script_dang_chay:
+            return
+            
+        file_path = os.path.join(path_folder_scripts, f"{cls.ten_script_dang_chay}.json")
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                cls.noi_dung_script_dang_chay = data.get('content', '')
+                cls.du_lieu_script_dang_chay = data
+                print(f"Đã tự động kích hoạt script: {cls.ten_script_dang_chay}")
+            except Exception as e:
+                print(f"Lỗi khi nạp script tự động: {e}")
 
 
-
-
-    
     # chức năng cập nhật vị trí agv thủ công
     cap_nhat_vi_tri_agv = {"toa_do": [0, 0], "huong": 0, "update_tam_thoi": False, "update": False}
     # các điểm mà agv đang quét sau khi đã qua icp, dạng array [[x, y, 1], ...]
@@ -558,12 +591,28 @@ class AGVConfig:
     esp32 = {"ket_noi": False, "message": "Disconnect", "COM": data_setting["cong_esp32"][0], "baudrate": data_setting["cong_esp32"][1]}
     driver_motor = {"ket_noi": False, "message": "Disconnect", "COM": data_setting["cong_driver"][0], "baudrate": data_setting["cong_driver"][1]}
     pin = {"ket_noi": False, "message": "Disconnect", "COM": data_setting["com_pin"][0], "baudrate": data_setting["com_pin"][1]} # ket noi qua r485 nên dùng COM
+    camera = {"ket_noi": False, "message": "Disconnect", "usb_camera_index": data_setting["cong_camera"], "Model": "None"}
+    
+
+    # "cong_camera": 0,
+    # "config_camera": {"fps": 120, "exposure": -13, "gain": 20, "width": 640, "height": 480, "pixel_to_mm_ratio": 0.25, "cti_path": "/opt/sentech/lib/libstgentl.cti"},
 
 
     dieu_khien_thu_cong = {"dieu_khien_thu_cong": False, "tien": 0, "lui": 0, "trai": 0, "phai": 0, "ha_xe": 0, "nang_xe": 0}
     last_manual_command_time = 0
 
     update_all_point_in_map = False # dùng để cập nhật tất cả các điểm mà lidar quét vào bản đồ gốc
+
+    config_camera_0 = data_setting["config_camera"]
+    config_camera = config_camera_0.copy()
+    img_camera_0 = np.ones((config_camera_0["height"], config_camera_0["width"], 3), dtype=np.uint8) * 128
+    img_camera = img_camera_0.copy()
+    # data tag info | toa_do_2d đơn vị pixel
+    tag_info = {"id": None, "lech_trai_phai_mm_x": None, "lech_truoc_sau_mm_y": None, "goc_lech_do": None, "toa_do_2d": None}
+    trang_thai_hien_thi_img = _saved.get("trang_thai_hien_thi_img", "off") # Nạp từ cấu hình cũ
+    diem_tiep_theo_april_tag = False
+    hien_thi_camera = False
+    fps_camera = 0
 
     
 # Gọi nạp bản đồ ngay khi module được load lần đầu
@@ -574,8 +623,8 @@ AGVConfig.load_points(AGVConfig.ten_danh_sach_diem)
 AGVConfig.load_paths(AGVConfig.ten_danh_sach_duong)
 # Nạp vùng chân xe hiện tại
 AGVConfig.load_loai_bo(AGVConfig.loai_bo_coc_xe["ten_vung_loai_bo"])
-
-
+# Tự động nạp script cũ nếu có
+AGVConfig.load_active_script()
 
 
    

@@ -70,7 +70,12 @@ def angle_with_ox(A, B):
     angle_rad = np.arctan2(dy, dx)
     angle_deg = -180 - np.degrees(angle_rad)
     return angle_deg
-
+def chuan_hoa_goc_180(angle):
+    """
+    Chuyển đổi một góc bất kỳ về khoảng [0, 180].
+    Toán tử % trong Python đảm bảo kết quả luôn cùng dấu với số chia (180).
+    """
+    return angle % 180
 def normalize_angle(angle):
     """
     Chuẩn hóa một góc về khoảng [-180, 180] độ.

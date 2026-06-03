@@ -87,6 +87,7 @@ class LidarP:
     def process_data(self):
         # Thiết lập ngưỡng: None để lấy tất cả, hoặc số cụ thể (ví dụ: 800) để lọc phản quang
         # INTENSITY_THRESHOLD = 4000 
+        # INTENSITY_THRESHOLD = 1000 
         INTENSITY_THRESHOLD = None
 
         while self.connect:

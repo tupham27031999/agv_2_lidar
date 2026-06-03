@@ -64,7 +64,13 @@
         <div id="homeTab" class="tab-content active">
             <div class="main-layout">
                 <!-- Phần hiển thị bản đồ -->
-                <div id="osd-viewer" class="map-view"></div>
+                <div id="osd-viewer" class="map-view">
+                    <!-- Khung Camera PIP (Picture-in-Picture) -->
+                    <div id="camera-overlay" class="camera-overlay" style="display: none;">
+                        <img id="camera-frame" src="" alt="Camera Feed">
+                        <div class="camera-label"><i class="fa-solid fa-video"></i> Camera</div>
+                    </div>
+                </div>
                 
                 <!-- Thanh công cụ bên phải -->
                 <div class="side-toolbar">
@@ -101,6 +107,14 @@
                                 onclick="toggleLidarView(event)">
                             <i class="fa-solid {{ 'fa-eye' if config.an_hien_diem_lidar_icp else 'fa-eye-slash' }}"></i>
                             <span>Hiện điểm Lidar</span>
+                        </button>
+                        
+                        <!-- NEW: Nút điều khiển hiển thị Camera -->
+                        <button id="btn-camera-display-mode"
+                                class="action-btn"
+                                onclick="toggleCameraDisplayMode()">
+                            <i class="fa-solid fa-camera"></i>
+                            <span id="camera-display-mode-text">Camera: {{ config.trang_thai_hien_thi_img | upper }}</span>
                         </button>
 
                         <hr class="separator">
@@ -525,6 +539,28 @@
                             {% set dev = config.pin %}
                             {% set dev_key = 'pin' %}
                             {% include 'device_controls.html' %}
+                        </div>
+                    </div>
+
+                    <!-- Camera Card -->
+                    <div class="device-card" id="card-camera">
+                        <div class="device-header">
+                            <i class="fa-solid fa-camera"></i>
+                            <h3>Camera</h3>
+                            <span class="status-dot"></span>
+                        </div>
+                        <div class="device-body">
+                            <p class="status-message">None</p>
+                            <div class="device-controls">
+                                <div class="control-group">
+                                    <label>USB Index</label>
+                                    <div class="fixed-value">{{ config.camera.usb_camera_index }}</div>
+                                </div>
+                                <div class="control-group">
+                                    <label>Model</label>
+                                    <div class="fixed-value">{{ config.camera.Model }}</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

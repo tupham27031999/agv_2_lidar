@@ -9,8 +9,10 @@
     "khoang_cach_dich": 20,
     "duong_kinh_coc": 50,
     "min_samples": 1,
-    "thiet_lap_ket_noi": {"lidar": "off", "driver_motor": "off", "esp32": "off", "pin": "off", "process_lidar": "on"},
+    "thiet_lap_ket_noi": {"camera": "off", "lidar": "on", "driver_motor": "off", "esp32": "off", "pin": "off", "process_lidar": "on"},
 
+    "cong_camera": 0, 
+    "config_camera": {"fps": 120, "exposure": -13, "gain": 20,"width": 640,"height": 480,"pixel_to_mm_ratio": 0.025, "cti_path": "/opt/sentech/lib/libstgentl.cti"},
 
     "cong_esp32": ["/dev/esp32_loa", 115200],
     "cong_lidar": ["/dev/ttyUSB1", 256000],
@@ -34,7 +36,8 @@
     "khoang_cach_an_toan_ben_canh_re": [500, 700, 800],
     "khoang_cach_an_toan_duoi_re": [500, 500, 500],
 
-    "khoang_cach_an_toan_tren": [780, 1200, 1400],
+    "khoang_cach_an_toan_tren_old": [780, 1200, 1400],
+    "khoang_cach_an_toan_tren": [880, 1200, 1400],
     "khoang_cach_an_toan_ben_canh": [390, 410, 440],
     "khoang_cach_an_toan_duoi": [520, 520, 520],
 

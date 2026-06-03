@@ -249,23 +249,23 @@ class kiem_tra_vat_can:
                         khoang_cach_ben_canh = self.khoang_cach_an_toan_ben_canh_xe_re
                         khoang_cach_duoi = self.khoang_cach_an_toan_duoi_xe_re
 
-        if len(khoang_cach_tren) < 3 or len(khoang_cach_ben_canh) < 3 or len(khoang_cach_duoi) < 3:
-            return "error", []
-        if AGVConfig.kc_an_toan_truoc_code is not None:
-            if len(AGVConfig.kc_an_toan_truoc_code) >= 3:
-                khoang_cach_tren = AGVConfig.kc_an_toan_truoc_code
-        if AGVConfig.kc_an_toan_sau_code is not None:
-            if len(AGVConfig.kc_an_toan_sau_code) >= 3:
-                khoang_cach_duoi = AGVConfig.kc_an_toan_sau_code
-        if AGVConfig.kc_an_toan_ben_canh_code is not None:
-            if len(AGVConfig.kc_an_toan_ben_canh_code) >= 3:
-                khoang_cach_ben_canh = AGVConfig.kc_an_toan_ben_canh_code
+        # if len(khoang_cach_tren) < 3 or len(khoang_cach_ben_canh) < 3 or len(khoang_cach_duoi) < 3:
+        #     return "error", []
+        # if AGVConfig.kc_an_toan_truoc_code is not None:
+        #     if len(AGVConfig.kc_an_toan_truoc_code) >= 3:
+        #         khoang_cach_tren = AGVConfig.kc_an_toan_truoc_code
+        # if AGVConfig.kc_an_toan_sau_code is not None:
+        #     if len(AGVConfig.kc_an_toan_sau_code) >= 3:
+        #         khoang_cach_duoi = AGVConfig.kc_an_toan_sau_code
+        # if AGVConfig.kc_an_toan_ben_canh_code is not None:
+        #     if len(AGVConfig.kc_an_toan_ben_canh_code) >= 3:
+        #         khoang_cach_ben_canh = AGVConfig.kc_an_toan_ben_canh_code
         zones = {
             "vung_1": (khoang_cach_tren[0], khoang_cach_ben_canh[0], khoang_cach_duoi[0]),
             "vung_2": (khoang_cach_tren[1], khoang_cach_ben_canh[1], khoang_cach_duoi[1]),
             "vung_3": (khoang_cach_tren[2], khoang_cach_ben_canh[2], khoang_cach_duoi[2]),
         }
-        # print("zones", zones)
+        
         # ---- Bước 1: Kiểm tra đầu vào rỗng ----
         points = np.array(points)
         if points.size == 0:
@@ -273,12 +273,11 @@ class kiem_tra_vat_can:
 
         # ---- Bước 2: Lọc các điểm trong vùng loại trừ (chân xe) ----
         # Vùng loại trừ là cố định so với thân xe, nên ta lọc trên các điểm gốc.
-        # print("----------------000------------", AGVConfig.vung_loai_bo_x1y1x2y2, len(AGVConfig.vung_loai_bo_x1y1x2y2))
-        points = self.filter_exclusion_zones(points, [])
-        # print("len", len(points))
+        # print("----------------000------------", self.vung_loai_bo, len(self.vung_loai_bo))
+        points = self.filter_exclusion_zones(points, AGVConfig.vung_loai_bo_x1y1x2y2)
+
         # Nếu không còn điểm sau khi lọc
         if len(points) == 0:
-            # print("khong con diem sau khi loc an toan")
             return "none", []
 
         # ---- Bước 3: Xoay các điểm Lidar về hệ tọa độ của HƯỚNG DI CHUYỂN ----

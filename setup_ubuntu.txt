@@ -1,0 +1,153 @@
+tupn@tupn-iEP-7030E:
+
+http://192.168.1.100/
+http://192.168.0.100/
+
+CPU: Intel Core i7 (Thế hệ 11 trở lên, ưu tiên dòng Core Ultra hoặc i7-12xx trở lên).
+RAM: 16GB DDR4/DDR5 Industrial Grade.
+SSD: 256GB/512GB NVMe M.2 với tính năng Power Loss Protection (PLP).
+Hệ điều hành: Ubuntu 22.04 hoặc 24.04 LTS (như bạn đang dùng).
+
+
+thông tin IPC
+tupn@tupn-iEP-7030E:~$ sudo apt update && sudo apt install inxi -y
+tupn@tupn-iEP-7030E:~$ inxi -Fxxxz
+
+
+lựa chọn cài ubuntu
+- interactive installation
+- default selection (minimal installation / default apps)
+- chọn cả 2 lựa chọn: install third-party software for gr.... và dowload and install support for additional media formats
+- chọn erase disk and install ubuntu
+- chọn require my password
+- chọn bangkok
+.... chọn next hết
+
+
+
+1. cài đặt unikey
+sudo apt update
+sudo apt install ibus-unikey -y
+vào setting, Region & Language thêm ngôn ngữ VN và setting/keybroad
+sử dụng phím window space để thay đổi ngôn ngữ
+2. đã có sẵn python, kiểm tra vision
+python3 --version
+Python 3.12.3
+tải thêm 3.11.3 để dùng
+sudo apt update
+
+sudo apt install -y build-essential wget libssl-dev zlib1g-dev \
+libncurses5-dev libffi-dev libsqlite3-dev libreadline-dev \
+libbz2-dev liblzma-dev tk-dev
+
+wget https://www.python.org/ftp/python/3.11.3/Python-3.11.3.tgz
+tar -xvzf Python-3.11.3.tgz
+cd Python-3.11.3
+
+./configure --enable-optimizations
+make -j$(nproc)
+sudo make altinstall
+
+python3.11 --version
+
+3. cài pip 
+sudo apt install python3-pip
+4. tải vs code .deb trên web
+sudo apt install ~/Downloads/code_1.104.1-1758154125_amd64.deb
+5. mở vs code cài
+Python (Microsoft)
+Pylance (tự động gợi ý code, type checking)
+Jupyter (nếu bạn muốn chạy notebook)
+6. cài các thư viện
+
+
+/usr/local/bin/python3.11 -m ensurepip --upgrade
+/usr/local/bin/python3.11 -m pip install --upgrade pip setuptools wheel
+
+sudo apt update
+sudo apt install -y \
+  python3-tk portaudio19-dev python3-pyaudio
+
+/usr/local/bin/python3.11 -m pip install --upgrade \
+  numpy opencv-python pynput open3d flask requests pillow pyperclip \
+  PyQt6 rplidar-roboticia gTTS pygame scikit-image pymodbus \
+  sounddevice pyinstaller
+
+------------------------------------------------
+
+tạo file khởi động cùng ubuntu:
+mkdir -p /home/tupn/.config/autostart
+nano ~/.config/autostart/vscode.desktop
+--------------------------------------------------
+
+------------------------------------------------------
+kiểm tra các cổng COM:
+ls /dev/ttyUSB*
+----------------------------------------------
+cài nmap
+sudo apt update
+sudo apt install nmap -y
+
+-----------------------------------------------------------
+cho phép kết nối qua com
+sudo usermod -a -G dialout tupn
+-------------------------------------------
+
+
+sudo apt update
+sudo apt install git -y
+
+-------------------------------------------------------------
+lsusb
+
+cài đặt địa chỉ cổng com không thay đổi
+1. xem tên:
+udevadm info -a -n /dev/ttyUSB0 | grep '{serial}' | head -n 1
+udevadm info -a -n /dev/ttyUSB1 | grep '{serial}' | head -n 1
+udevadm info -a -n /dev/ttyUSB2 | grep '{serial}' | head -n 1
+2. vào :
+sudo nano /etc/udev/rules.d/99-usb-serial.rules
+nhập thay đổi cho đúng:
+# ESP32 - CP210x
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="0001", SYMLINK+="esp32_loa"
+
+# DM542 - FTDI
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6015", ATTRS{serial}=="DU0DHHFY", SYMLINK+="driver_motor"
+
+# PIN485 - FTDI
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6015", ATTRS{serial}=="DU0DIK9M", SYMLINK+="pin"
+
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+
+
+ls -l /dev/esp32_loa /dev/driver_motor /dev/pin
+------------------------------------------------------
+
+max hiệu năng
+sudo nano /etc/systemd/system/cpufreq-performance.service
+
+- nội dung:
+[Unit]
+Description=Set CPU governor to performance
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'for CPU in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo performance > $CPU; done'
+
+[Install]
+WantedBy=multi-user.target
+- setup
+sudo systemctl daemon-reload
+sudo systemctl enable cpufreq-performance.service
+sudo systemctl start cpufreq-performance.service
+
+
+kiemr tra 
+cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+tất cả đều performance -- > thành công
+----------------------------------------------------------------
+
+sudo apt update
+sudo apt install cheese

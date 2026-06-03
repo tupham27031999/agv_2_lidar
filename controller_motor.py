@@ -109,14 +109,14 @@ def agv_bam_duong(
     #         omega_max = 0.4
 
     # ================== 7. Stanley cải tiến ==================
-    if AGVConfig.run_state == 1:
-        print(k_yaw , e_yaw ,k_ct , math.atan2(e_ct, max(abs(v), 50)), e_yaw * 180 / math.pi)
+    # if AGVConfig.run_state == 1:
+    #     print(k_yaw , e_yaw ,k_ct , math.atan2(e_ct, max(abs(v), 50)), e_yaw * 180 / math.pi)
     omega = k_yaw * e_yaw + k_ct * math.atan2(e_ct, max(abs(v), 50))
 
     # ================== 8. Giới hạn quay ==================
     omega = max(min(omega, omega_max), -omega_max)
-    if AGVConfig.run_state == 1:
-        print(omega, "omega")
+    # if AGVConfig.run_state == 1:
+    #     print(omega, "omega")
     # ================== 9. Điều kiện dừng chính xác ==================
     if dist_to_goal < 10:
         v = 0

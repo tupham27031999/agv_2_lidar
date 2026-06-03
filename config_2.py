@@ -92,6 +92,8 @@ class AGVConfig_2:
     khoang_cach_duong_di = data_setting["khoang_cach_duong_di"] # loại bỏ
     khoang_cach_dich = data_setting["khoang_cach_dich"] # loại bỏ
     duong_kinh_coc = data_setting["duong_kinh_coc"] # dùng cho auto tìm loại bỏ cọc, vùng loại bỏ || bán kính gom cụm
+
+    # ket_noi_camera = data_setting
     min_samples = data_setting["min_samples"] # Số điểm tối thiểu để tạo cụm
 
     cong_lidar = data_setting["cong_lidar"] # có thể sau này sẽ dùng
