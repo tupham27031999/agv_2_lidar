@@ -151,3 +151,9 @@ tất cả đều performance -- > thành công
 
 sudo apt update
 sudo apt install cheese
+
+
+update leen git-----
+git add .
+git commit -m "cap nhat data DB va images tren Supabase lan 11"
+git push

@@ -153,6 +153,7 @@ class Python_Esp:
         try:
             self.serial.write(ack_message.encode())
             print("sent_data---------------rrrr", ack_message.strip())
+            time.sleep(0.1)
         except Exception as e:
             print(f"Lỗi khi gửi ACK: {e}")
             self.connected = False
@@ -207,6 +208,7 @@ class Python_Esp:
                     self.input_esp[f"IN{i+1}"] = int(bit)
 
             self.loi_motor_nang_ha = 1 if self.input_esp["IN8"] == 0 else 0
+            print("self.input_esp", self.input_esp)
         except (ValueError, IndexError) as e:
             print(f"Lỗi phân tích trạng thái input '{input_status_str}': {e}")
 
@@ -219,6 +221,7 @@ class Python_Esp:
             dung_hoat_dong_str = "dung_hoat_dong_1" if self.dung_hoat_dong == 1 else "dung_hoat_dong_0"
             data_to_send = f"{command_to_send}#{dung_hoat_dong_str}#0\r\n"
             self.serial.write(data_to_send.encode())
+            time.sleep(0.1)
             print(f"{log_prefix}---------------->", data_to_send.strip())
         except Exception as e:
             print(f"Lỗi khi gửi dữ liệu ({log_prefix}): {e}")
@@ -303,9 +306,11 @@ def check_connect():
     # else:
     #     py_sent_esp("bat_tat_den#bat#0")
     #     pass
+
+gui_dinh_ky = time.time()
 def python_esp32():
     global sent_data,sent_data_new, connected, input_esp, check_connect_esp, gui_off_24v_thanh_cong, gui_bat_loa_thanh_cong, connect_esp, gui_bat_tat_den_thanh_cong
-    global gui_nha_phanh_thanh_cong, gui_nang_ha_thanh_cong, dung_hoat_dong, loi_motor_nang_ha, reset_5s
+    global gui_nha_phanh_thanh_cong, gui_nang_ha_thanh_cong, dung_hoat_dong, loi_motor_nang_ha, reset_5s, gui_dinh_ky
     
     py_esp = Python_Esp()
     py_esp.khai_bao_serial()
@@ -348,6 +353,10 @@ def python_esp32():
                 connected = True
             if py_esp.connected == False:
                 py_esp.khai_bao_serial()
+            if time.time() - gui_dinh_ky > 5:
+                gui_dinh_ky = time.time()
+                sent_data = str(gui_dinh_ky)
+
             if sent_data != "":
                 if sent_data != sent_data_new:
                     py_esp.sent_data(sent_data)

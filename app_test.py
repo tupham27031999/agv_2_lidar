@@ -15,6 +15,7 @@ import process
 import ast
 import math
 from them_1_ma_apriltag import generate_single_tag
+import socket
 
 
 PATH_DATA_IN_OUT = config.PATH_PHAN_MEM + "/data_input_output"
@@ -303,6 +304,7 @@ def add_delete_area():
     """API thêm vùng hình chữ nhật vào danh sách xóa"""
     data = request.json
     area = data.get('area') # [x1, y1, x2, y2]
+    print("area", area)
     if area:
         AGVConfig.xoa_vung_ban_do["vung_xoa"].append(area)
         return jsonify({"status": "success"})
@@ -590,6 +592,7 @@ def run_script_interpreter():
     AGVConfig.data_vung_loai_bo_code = None
     AGVConfig.tim_apriltag_diem_tiep_theo_code = False
     AGVConfig.check_apriltag_code = {"id": None, "vi_tri": [], "xoay_goc": None, "mode": None, "sai_so_goc": None}
+    AGVConfig.nang_ha_xe_code = None
 
 
     try:
@@ -847,12 +850,14 @@ def pc_sent_agv_endpoint():
         tin_hieu_nhan = data
         # cập nhật các thông tin cần thiết'
         AGVConfig.AGV_STATES[AGVConfig.name_agv]["dieu_khien_agv"] = tin_hieu_nhan[AGVConfig.name_agv]["dieu_khien_agv"]
-        # print("AGVConfig.AGV_STAT 000000000", AGVConfig.AGV_STATES[AGVConfig.name_agv]["dieu_khien_agv"])
+        print("AGVConfig.AGV_STAT 000000000", AGVConfig.AGV_STATES[AGVConfig.name_agv]["dieu_khien_agv"])
     
         cap_nhat_thong_tin_agv() # cập nhật các thông tin khác của AGV nếu cần thiết
-        tin_hieu_gui = AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]
+        # tin_hieu_gui = AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]
+        tin_hieu_gui = {AGVConfig.name_agv: {"thong_tin_agv": AGVConfig.AGV_STATES[AGVConfig.name_agv]["thong_tin_agv"]}}
         # print("00000000000000000", tin_hieu_gui)
 
+        # print("9999999999999", tin_hieu_nhan)
         log_communication("nhan", thoi_gian_nhan_str, tin_hieu_nhan)
         log_communication("gui", thoi_gian_nhan_str, tin_hieu_gui)
         return jsonify({"status": "success", "data": tin_hieu_gui}), 200
@@ -1129,7 +1134,45 @@ def icp_simulation_loop(handler):
         # print(AGVConfig.che_do_tao_ban_do)
         # time.sleep(0.1) # Tăng tần suất kiểm tra (10Hz) để xử lý watchdog kịp thời
 
+
+def get_all_local_ips():
+    """
+    Lấy danh sách tất cả các địa chỉ IPv4 của máy tính trên các interface khác nhau.
+    """
+    ips = []
+    preferred_ips = []
+    other_ips = []
+    try:
+        # Cách lấy tất cả IP khả dụng trên Windows/Linux
+        hostname = socket.gethostname()
+        info = socket.getaddrinfo(hostname, None)
+        for item in info:
+            ip = item[4][0]
+            # Chỉ lấy IPv4 và bỏ qua localhost
+            if "." in ip and not ip.startswith("127."):
+                if ip not in preferred_ips and ip not in other_ips: # Tránh trùng lặp
+                    # Ưu tiên các IP trong dải 192.168.0.x (thường là Wi-Fi)
+                    if ip.startswith("192.168.0."):
+                        preferred_ips.append(ip)
+                    else:
+                        other_ips.append(ip)
+        
+        # Trả về các IP ưu tiên trước, sau đó là các IP khác
+        final_ips = preferred_ips + other_ips
+        if not final_ips:
+            final_ips.append("127.0.0.1") # Fallback về localhost nếu không tìm thấy IP nào khác
+        return final_ips
+    except Exception as e:
+        print(f"Lỗi khi liệt kê IP: {e}")
+        return ["127.0.0.1"]
+
+
 if __name__ == '__main__':
+    import webbrowser
+    from threading import Timer
+    # print("-----",get_all_local_ips())
+    def open_browser():
+        webbrowser.open_new(f"http://{get_all_local_ips()[0]}:{5001}/")
     # Đảm bảo luồng mô phỏng chỉ chạy 1 lần trong tiến trình xử lý chính
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         # Khởi tạo bộ xử lý lidar chỉ một lần trong tiến trình chính
@@ -1137,5 +1180,15 @@ if __name__ == '__main__':
         threading.Thread(target=icp_simulation_loop, args=(process_handler,), daemon=True).start()
     
 
+    # Hiển thị các IP khả dụng để người dùng biết IP nào của Hotspot
+    print("--- HỆ THỐNG ĐANG KHỞI CHẠY ---")
+    local_ips = get_all_local_ips()
+    print(f"Các địa chỉ IP khả dụng trên máy tính này:")
+    for ip in local_ips:
+        print(f" -------------------> http://{ip}:5001")
+    print("Nếu dùng điện thoại kết nối vào USB WiFi, hãy chọn IP thuộc dải của WiFi đó.")
+    print("-------------------------------")
+    # Timer(1, open_browser).start()
+    # open_browser()
     # Chạy server. Nếu muốn dừng việc chạy 2 lần hoàn toàn, thêm use_reloader=False
     app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=True)

@@ -220,7 +220,7 @@ class kiem_tra_vat_can:
                 khoang_cach_ben_canh = self.khoang_cach_an_toan_ben_canh_nang
                 khoang_cach_duoi = self.khoang_cach_an_toan_tren_nang
             else:
-                if AGVConfig.xy_lanh_code == "ha":
+                if AGVConfig.xy_lanh_code == "ha" or 1 == 1:
                     if dang_re == 0:
                         if di_thuan_nguoc == 1:
                             khoang_cach_tren = self.khoang_cach_an_toan_duoi
@@ -252,6 +252,7 @@ class kiem_tra_vat_can:
         if len(khoang_cach_tren) < 3 or len(khoang_cach_ben_canh) < 3 or len(khoang_cach_duoi) < 3:
             return "error", []
         if AGVConfig.kc_an_toan_truoc_code is not None:
+            # print("bbbb")
             if len(AGVConfig.kc_an_toan_truoc_code) >= 3:
                 khoang_cach_tren = AGVConfig.kc_an_toan_truoc_code
         if AGVConfig.kc_an_toan_sau_code is not None:

@@ -127,7 +127,7 @@ class xu_ly_du_lieu_lidar:
         scan_xy, scan1, scan2, huong_agv_toa_do_xyz = self.du_lieu_lidar.mix_data_lidar(self.ten_lidar, self.huong_agv_khong_icp, 
                                                                                         self.lidar1_orient_deg, self.lidar2_orient_deg, 
                                                                                         AGVConfig.chieu_ngang_xe, AGVConfig.chieu_doc_xe)
-
+        # print("000000000000000", scan_xy.shape)
         if AGVConfig.dieu_khien_thu_cong["dieu_khien_thu_cong"] == False:
             AGVConfig_2.loi_an_toan, scan_an_toan = self.kiem_tra_an_toan_lidar(scan_xy, huong_agv_toa_do_xyz)
             # print("vnvnv",  AGVConfig_2.loi_an_toan, scan_an_toan )

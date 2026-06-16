@@ -1,5 +1,5 @@
 {
     "name": "all",
-    "content": "# chay_script('logic_an_toan')\n# chay_script('logic_lay_xe_linh_kien')\n# chay_script('logic_lay_linh_kien')\n# chay_script('logic_di_duong_cong')\nchay_script('logic_coi_khi_ra_hanh_lang')\n",
-    "updated_at": "2026-05-05 09:36:48"
+    "content": "# chay_script('logic_an_toan')\n# chay_script('logic_lay_xe_linh_kien')\nchay_script('logic_tra_xe_linh_kien')\n# chay_script('logic_lay_linh_kien')\n# chay_script('logic_di_duong_cong')\n# chay_script('logic_coi_khi_ra_hanh_lang')\nchay_script('logic_an_toan_den_vi_tri_tra')\n# chay_script('ma_apriltag')\n\nchay_script('logic_lay_xe_linh_kien')\n\n\n",
+    "updated_at": "2026-06-12 16:33:32"
 }

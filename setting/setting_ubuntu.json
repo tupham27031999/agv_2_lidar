@@ -9,7 +9,7 @@
     "khoang_cach_dich": 20,
     "duong_kinh_coc": 50,
     "min_samples": 1,
-    "thiet_lap_ket_noi": {"camera": "off", "lidar": "on", "driver_motor": "off", "esp32": "off", "pin": "off", "process_lidar": "on"},
+    "thiet_lap_ket_noi": {"camera": "off", "lidar": "on", "driver_motor": "on", "esp32": "on", "pin": "on", "process_lidar": "on"},
 
     "cong_camera": 0, 
     "config_camera": {"fps": 120, "exposure": -13, "gain": 20,"width": 640,"height": 480,"pixel_to_mm_ratio": 0.025, "cti_path": "/opt/sentech/lib/libstgentl.cti"},

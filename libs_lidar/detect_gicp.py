@@ -1030,7 +1030,7 @@ class FastLidarMapper:
 
 
         AGVConfig.img_mapping, x_crop, y_crop = self.draw_debug(self.log_odds, window_name="map", show_scan=pts_world)
-        print("AGVConfig.img_mapping", AGVConfig.img_mapping.shape)
+        # print("AGVConfig.img_mapping", AGVConfig.img_mapping.shape)
 
         if px_map is not None and py_map is not None:
             AGVConfig.danh_sach_diem_lidar_icp = np.vstack((px_map, py_map, np.zeros_like(px_map))).T

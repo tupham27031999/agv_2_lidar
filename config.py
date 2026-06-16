@@ -172,7 +172,7 @@ class AGVConfig:
             ("diem_vua_di_qua", "Tên điểm vừa đi qua (string)"),
             ("diem_tiep_theo", "Tên điểm tiếp theo (string)"),
             ("diem_cuoi", "Tên điểm cuối cùng agv cần đi đến (string)"),
-            ("yeu_cau_gui_agv", "'cho_lenh', 'lay_hang', 'tra_hang', 'error'"),
+            ("yeu_cau_gui_agv", "'lay_xe_linh_kien', 'tra_xe_linh_kien', 'lay_linh_kien'"),
             ("april_tag", "[{id, lech_trai_phai_mm_y, lech_truoc_sau_mm_x, goc_lech_do, toa_do_2d}, ...]"),
             ("xy_lanh", "'nang' hoặc 'ha'"),
             ("khoang_cach_den_diem_cuoi", "Khoảng cách đến điểm cuối cùng (mm)"),
@@ -261,7 +261,7 @@ class AGVConfig:
 
     AGV_STATES = {
         agv: {
-            "thong_tin_agv": {
+            "thong_tin_agv": {  "diem_gan_nhat": "",
                                 "diem_vua_di_qua": "",
                                 "diem_tiep_theo": "",
                                 "diem_cuoi": "",
